@@ -1,0 +1,7 @@
+<p>Integration Notes</p><div><p>For Match and Market objects the field ‘ObjectVersion’ contains the numeric version number of
+                    object(the type of field is STRING because of issues in some programming languages and platforms and
+                    actually contains unsigned long numeric value). For correct integration the ‘version number’ check
+                    of Match and Market object types must be implemented. All received updates where the received
+                    version number for a concrete object is less than the current value, should be skipped. This logic
+                    is actual for fast-changing markets (basketball, volleyball, etc.). If there is LiveResulting
+                    subscription, there can't be subscription for live Matches and vice versa.</p><div><li>Active item`s condition</li><br/><p>The item will be considered active only if (IsSuspended = false and IsVisible = true) the following two conditions apply.</p></div></div>

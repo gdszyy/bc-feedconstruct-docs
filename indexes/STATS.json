@@ -1,0 +1,28 @@
+{
+  "scraped_at": "2026-05-07T08:49:13.195Z",
+  "source_url": "https://oddsfeed.feedconstruct.com/documentation?currentLoc=oddsFeedRmqAndWebApi&location=summary",
+  "raw_pages": 261,
+  "deduplicated_pages": 249,
+  "counts_by_current_loc": {
+    "oddsFeedRmqAndWebApi": 43,
+    "feedSocketApi": 33,
+    "translationSocketApi": 8,
+    "translationWebApi": 12,
+    "match_lifecycle_for_live": 1,
+    "eventTypes": 2,
+    "marketTypes": 1,
+    "sports": 1,
+    "sportsBookNotes": 1,
+    "sports_rules": 81,
+    "odds_conversion": 1,
+    "betGuard": 65
+  },
+  "counts_by_business_domain": {
+    "数据源服务 / OddsFeed": 76,
+    "翻译数据服务": 20,
+    "体育数据模型参考": 5,
+    "体育博彩业务规则": 82,
+    "赔率与计算": 1,
+    "投注风控服务 / BetGuard": 65
+  }
+}

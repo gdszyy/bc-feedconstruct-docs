@@ -1,0 +1,16 @@
+<p>ReturnBet</p><div><p>The <strong>ReturnBet</strong> endpoint <strong>marks a bet in the Accepted state as returned</strong>. This call is used when a Partner needs to return (void) a bet due to a specific reason.</p><p> <i></i><strong> Important:</strong> Only bets in the <strong>Accepted </strong>state can be returned using this endpoint. If the bet has already been resulted or its outcome has been determined, the call will be rejected.</p><p>This allows the Partner to handle exceptional cases where a placed bet must be voided and refunded before it is settled.</p><div><div><div><div><div><div><table><thead><tr><td><div><div><div><label>Request URL Sample</label><div><input/><fieldset><legend><span>Request URL Sample</span></legend></fieldset></div></div></div></div></td><td><div><div><div><label>Request Body</label><div><input/><fieldset><legend><span>Request Body</span></legend></fieldset></div></div></div></div></td><td><div><div><div><label>Response</label><div><input/><fieldset><legend><span>Response</span></legend></fieldset></div></div></div></div></td><td></td></tr></thead><tbody><tr><td>http://hostname/api/LangId/PartnerId/PartnerAPI/ReturnBet
+        
+         Method: POST
+         
+                   .../api/en/290/Bet/ReturnBet
+</td><td>FilterBetReturnModel</td><td>Success---------ResponseWrapper
+                          {
+         StatusCode=”0”,                                     
+         Data={}
+                        }
+Error-----------ResponseWrapper
+                          {
+                       StatusCode=errorCode,
+                              Data=errorMessage
+                        }
+</td></tr></tbody></table></div></div></div></div></div><li>FilterBetReturnModel</li><div><div><div><div><div><table><thead><tr><td><div><div><div><label>Field Name</label><div><input/><fieldset><legend><span>Field Name</span></legend></fieldset></div></div></div></div></td><td><div><div><div><label>Type</label><div><input/><fieldset><legend><span>Type</span></legend></fieldset></div></div></div></div></td><td><div><div><div><label>Requirement</label><div><input/><fieldset><legend><span>Requirement</span></legend></fieldset></div></div></div></div></td><td><div><div><div><label>Description</label><div><input/><fieldset><legend><span>Description</span></legend></fieldset></div></div></div></div></td><td></td></tr></thead><tbody><tr><td>BetId</td><td>long</td><td>Mandatory</td><td>Bet Id</td></tr><tr><td>RequestHash</td><td>string</td><td>Mandatory</td><td>required for partner verification</td></tr><tr><td>ExternalId</td><td>long</td><td>Optional</td><td>Partner’s unique identifier of the bet,<strong> if specified, BetId should be 0.</strong></td></tr></tbody></table></div></div></div></div></div></div></div>

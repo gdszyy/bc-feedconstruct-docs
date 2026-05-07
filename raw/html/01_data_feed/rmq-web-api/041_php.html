@@ -1,0 +1,11 @@
+<p>PHP</p><div><div><span><h4>Source</h4> <span>(Version 0.0.3)</span></span><span>FeedConstruct.OddsFeed.src.zip</span><br/></div><h4>Usage Sample</h4><pre><div><span>&lt;?php<span><i></i></span></span></div><div><span>
+</span></div><div><span>require_once 'Requestor.php';</span></div><div><span>require_once 'RmqDataHandlerSample.php';</span></div><div><span>require_once 'IRmqDataHandler.php';</span></div><div><span>require_once 'RmqSubscribeClient.php';</span></div><div><span>
+</span></div><div><span>error_reporting(E_ALL &amp;&amp; ~E_WARNING);</span></div><div><span>date_default_timezone_set ( 'Asia/Yerevan' );</span></div><div><span>set_time_limit ( 0 );</span></div><div><span>
+</span></div><div><span>//include default values</span></div><div><span>require('config.php');</span></div><div><span>
+</span></div><div><span>
+</span></div><div><span>$WebApiClient = new \WebApiClient($apiParams);</span></div><div><span>
+</span></div><div><span>$Requestor = new \Requestor($WebApiClient);</span></div><div><span>
+</span></div><div><span>$sports = $Requestor-&gt;getSports();</span></div><div><span>$competitions = $Requestor-&gt;getCompetitions();</span></div><div><span>$competition = $Requestor-&gt;getCompetitionById(29971);</span></div><div><span>$booking = $Requestor-&gt;getBookings(true);</span></div><div><span>
+</span></div><div><span>$match = $Requestor-&gt;getMatchById(19824998,  true);</span></div><div><span>$dataSnapshot = $Requestor-&gt;getDataSnapshot(true, 1);</span></div><div><span>$sportOrder = $Requestor-&gt;getSportOrder();</span></div><div><span>//...</span></div><div><span>
+</span></div><div><span>//class must implement IRmqDataHandler interface</span></div><div><span>$handler = new \RmqDataHandlerSample();</span></div><div><span>//RMQ SUBSCRIBE FOR UPDATES</span></div><div><span>$rmqClient = new RmqSubscribeClient($rmqParams, $handler);</span></div><div><span>
+</span></div><div><span>$rmqClient-&gt;subscribe();</span></div></pre></div>

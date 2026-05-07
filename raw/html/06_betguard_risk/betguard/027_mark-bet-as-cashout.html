@@ -1,0 +1,16 @@
+<p>MarkBetAsCashout</p><div><p>The <strong>MarkBetAsCashout</strong> endpoint <strong>marks a bet as cashed out without performing validation on odd or on cashout availability</strong>.</p><p>This call is intended for use cases where the cashout is processed and fully checked by the Partner, the Partner checks the availability of the Cashout at the moment itself and needs to be reflected in the system for tracking or settlement purposes.</p><p><i></i><strong> Use with caution: </strong>since no validation on the odd and cashout availability is performed, the caller is fully responsible for ensuring the correctness of the request.</p><p><strong>Note: </strong>The Cashout amount cannot be higher than Possible Win. In case the provided Amount will be higher, it will result in Cashout rejection.</p><div><div><div><div><div><div><table><thead><tr><td><div><div><div><label>Request URL Sample</label><div><input/><fieldset><legend><span>Request URL Sample</span></legend></fieldset></div></div></div></div></td><td><div><div><div><label>Request Body</label><div><input/><fieldset><legend><span>Request Body</span></legend></fieldset></div></div></div></div></td><td><div><div><div><label>Response</label><div><input/><fieldset><legend><span>Response</span></legend></fieldset></div></div></div></div></td><td></td></tr></thead><tbody><tr><td>http://hostname/api/LangId/PartnerId/PartnerAPI/MarkBetAsCashout
+        
+         Method: POST
+         
+                    .../api/en/290/Bet/MarkBetAsCashout
+</td><td>CashoutModel</td><td>Success---------ResponseWrapper
+                          {
+         StatusCode=”0”,                                     
+         Data={}
+                        }
+Error-----------ResponseWrapper
+                          {
+                       StatusCode=errorCode,
+                              Data=errorMessage
+                        }
+</td></tr></tbody></table></div></div></div></div></div><li>CashoutModel</li><div><div><div><div><div><table><thead><tr><td><div><div><div><label>Field Name</label><div><input/><fieldset><legend><span>Field Name</span></legend></fieldset></div></div></div></div></td><td><div><div><div><label>Type</label><div><input/><fieldset><legend><span>Type</span></legend></fieldset></div></div></div></div></td><td><div><div><div><label>Requirement</label><div><input/><fieldset><legend><span>Requirement</span></legend></fieldset></div></div></div></div></td><td><div><div><div><label>Description</label><div><input/><fieldset><legend><span>Description</span></legend></fieldset></div></div></div></div></td><td></td></tr></thead><tbody><tr><td>BetId</td><td>long</td><td>Mandatory</td><td>Bet Id</td></tr><tr><td>Price</td><td>decimal</td><td>Mandatory</td><td>Indicates Cashout Amount</td></tr><tr><td>RequestHash</td><td>string</td><td>Mandatory</td><td>required for partner verification</td></tr></tbody></table></div></div></div></div></div></div></div>

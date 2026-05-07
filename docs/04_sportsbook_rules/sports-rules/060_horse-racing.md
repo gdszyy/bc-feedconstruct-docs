@@ -1,0 +1,261 @@
+---
+title: Horse Racing
+source_url: https://oddsfeed.feedconstruct.com/documentation?currentLoc=sports_rules&location=horse-racing
+current_loc: sports_rules
+location: horse-racing
+top_category: SPORTS RULES
+product_line: 体育博彩业务规则
+business_domain: 体育博彩业务规则
+scraped_at: 2026-05-07T08:49:13.195Z
+---
+
+# Horse Racing
+
+> 来源：FeedConstruct OddsFeed Documentation；抓取入口为 `https://oddsfeed.feedconstruct.com/documentation?currentLoc=sports_rules&location=horse-racing`。
+
+| 字段 | 值 |
+|---|---|
+| 一级分类 | SPORTS RULES |
+| 产品线 | 体育博彩业务规则 |
+| 业务域 | 体育博彩业务规则 |
+| currentLoc | `sports_rules` |
+| location | `horse-racing` |
+
+## 文档正文
+All races are settled as per the official result at the weighed in announcement in line with the rules of racing.
+
+AntePost/Future Horse Racing
+
+AntePost wagers are accepted on the basis all-in run or not, entered or not. Except where specifically stated otherwise, stakes are lost on an AntePost bet if a selection does not take part and no Rule 4 (Deductions) is made from winning AntePost bets.
+When the same horse is taken to win two or more races in AntePost doubles, trebles and accumulators special reduced odds will be offered.
+On days when classic or other trials occur, AntePost betting may be suspended and new prices issued.
+Jockey Club Rule 121 decrees that Stewards are empowered to reduce the numbers in a race if, at the overnight declaration stage, too many have been left in for the safety of horses and jockeys. AntePost bets on horses compulsorily withdrawn will be void and stakes returned. Bookmakers in these circumstances are authorised to make appropriate deductions from winning bets on the race, depending on the last Price(s) of the withdrawn horse(s) at the time of withdrawal in accordance with Rule 4 (Deductions). On the 'Day of the Race Prices' Rule 4 (Deductions) will also apply.
+AntePost bets are settled at the Price and Place terms applicable at the time of acceptance. Should a wrong Price or Place terms be given in error we reserve the right to settle the bet at the correct Price/Place terms that were available at the time the bet was struck.
+Should a wager struck at a Price on the day of an event couple selection(s) in that event with selection(s) in future event(s) then if the first selection(s) does not run the
+wager will be executed on the remaining selection(s) on the basis of all-in, run or not.
+
+Non Runner Money Back (NRMB)
+
+Some ante post/future horse racing races may be offered with NRMB terms and will be indicated as such in race name and will appear in open bets with NRMB listed. This means if the horse you backed does not run your stake will be returned.
+
+Each-Way Betting
+
+Bets are settled to win unless Each-way is selected. An Each-way bet is a bet of twice the selected unit stake. It contains one bet of unit stake on the selection to Win and one bet of unit stake on the selection to be Placed according to the terms advertised for the event. In general, for UK horse racing the Place part of Each-way bets will be settled as per the following Place terms:
+Handicaps 16 or more runners one quarter the odds first four Places
+Handicaps 12 15 runners one quarter the odds first three Places
+All other races of 8 or more runners one fifth the odds first three Places
+Races of 5, 6 or 7 runners one quarter the odds first two Places
+Less than 5 runners the Place money is invested to Win
+In all races the number of runners shall be the number of runners coming under starters orders. Bets will not be accepted where the Place stake exceeds the Win stake. Each-way doubles, trebles and accumulators will be settled Win to Win and Place to Place in accordance with the above.
+
+Refused to Race
+
+Where a horse officially ‘refuses to race’ it means that the horse has come under starter’s orders and is therefore treated as participating in the race. Bets on the horse will be lost.
+
+Non-standard place terms
+
+Some races may be offered with non-standard place terms with additional places. These terms will be stated at the time of bet placement but will be determined by the number of horses that run in the race at the off (not at bet placement). In the event of non-runners and/or withdrawals we reserve the right to change these enhanced place terms to the standard place terms listed above.
+
+Dead-Heats
+
+Where two selections dead-heat half the stake money is lost, and the full odds are paid to the other half. If more than two dead-heat the stake is proportioned accordingly.
+
+Favourites/2nd Favourites
+
+Wagers will be accepted win only at starting price for 1st and 2nd favourites. The Place part of any wager inadvertently accepted for unnamed favourites will be settled as a Win stake.
+In the event of two selections starting joint favourites then stakes are divided equally. Where three or more selections start co-favourites, stakes will be divided proportionately. However, if such joint favourites or co-favourites are returned at a price whereby, irrespective of result, no profit could be accrued by the backer of the favourite, the unnamed favourite will be treated as a non-runner, in both single and accumulative bets.
+Should the favourite be withdrawn before coming under starter's orders but too late for a new market to be formed then bets on the favourite in that particular race are void. In the event a joint or co-favourite being withdrawn then the proportion of stakes on that selection will be void and the remaining proportion of stakes will be divided equally on the selections that do run.
+
+Forecast Betting
+
+Forecasts are accepted for all races of 3 or more actual runners and will be settled as a straight forecast (selections to finish 1st and 2nd in correct order) in accordance with the computer straight forecast dividend. If there are less than 3 actually running in a race, then all forecasts for that race will be void. In the event of no straight forecast dividend being declared then forecasts will be settled in accordance with the NSL straight forecast chart provided that 3 or more actually run in that race.
+You may take early prices or show prices in straight forecasts when available, in a fixed price forecast. If any withdrawals result in a total Rule 4 (Deductions) of £0.10 in the £ or greater than a fixed price forecast will be settled at the computer forecast dividend.
+Where a client selects combination forecasts A B C and stakes for 6 bets this will be settled as 6 straight forecasts as follows:
+AB BA
+AC CA
+BC CB
+Forecast bets are not accepted containing unnamed favourites.
+Should any forecast contain a non-runner then the total stake will be placed to Win on the other selection. In fixed price forecasts the remaining selection will be settled at SP.
+In races where a horse finishes alone and no forecast dividend is returned then all forecast bets nominating that horse to finish first will be settled as a Win single at SP on the winning horse. All other forecast bets in the race are lost.
+In the event of two or more horse’s dead-heating for first or second place then separate dividends will be declared and paid to each qualifying forecast. In fixed price forecasts the full odds will be paid with the stake split according to the number of horses which dead-heat.
+
+Tricast Betting
+
+You may take early prices or show prices in straight Tricasts when available, in a fixed price Tricast. This is available on all horse races of 8 or more runners. If any withdrawals result in a total Rule 4 (Deductions) of £0.10 in the £ or greater than a fixed price Tricast will be settled at the computer Tricast dividend. However, if no computer Tricast dividend is declared (e.g. in non-handicaps) then a fixed price Tricast will be settled as a computer straight forecast on the first two named selections irrespective of where the third named selection finishes.
+The following applies to both Tricasts and fixed price Tricasts: if one selection is a non-runner then the bet will be settled as a straight forecast at the computer forecast dividend. If there are two non-runners, then the bet will be settled as an SP single on the remaining selection.
+Tricasts are not accepted including unnamed favourites.
+In the event of two or more horse’s dead-heating for first, second or third place then separate dividends will be declared and paid to each qualifying Tricast. In fixed price Tricasts the full odds will be paid with the stake split according to the number of horses which dead-heat. Tricasts are accepted for singles only.
+
+Show/Board Prices
+
+Should a horse be withdrawn no show/board price will be laid after the time of withdrawal unless the market is reformed.
+
+Early Morning Prices/Day of Event Prices
+
+After the final declarations stage, non-runner no bet. Rule 4 (Deductions) will apply.
+
+Reserves
+
+In races with reserves, any bets taken prior to a reserve horse being declared to run and if the reserve was not priced up at the time the bet was placed, then any such bets will be settled on the result 'without the reserve runner(s)'. Each way bets settled on the result "without the reserve runner(s)" will be based on the number of runners, excluding reserves, that start the race. In races where reserves are priced but do not run, no Rule 4 (Deductions) will be applicable. The exception when non- runners occur so that a reserve is due to take part then is a subsequent non-runner where Rule 4 (Deduction) will apply.
+
+Withdrawals Other Than AntePost/Future Horse Racing
+
+Where a horse is withdrawn before coming under starter's orders, or is officially deemed by the starter to have taken no part in the race, then stakes will be returned on the withdrawn horse and winning bets will be subject to deductions in accordance with Rule 4 (Deductions). The rate of deduction will be based on the price of the withdrawn horse at the time of its withdrawal on the following scale:
+Rule 4 (Deductions) Table
+Deduction table for withdrawals other than AntePost
+1/9 or shorter - £0.90
+2/11 to 2/17- £0.85
+1/4 to 1/5 - £0.80
+3/10 to 2/7 - £0.75
+2/5 to 1/3 - £0.70
+8/15 to 4/9 - £0.65
+8/13 to 4/7 - £0.60
+4/5 to 4/6 - £0.55
+20/21 to 5/6 - £0.50
+EVS to 6/5 - £0.45
+5/4 to 6/4 - £0.40
+8/5 to 7/4 - £0.35
+9/5 to 9/4 - £0.30
+12/5 to 3/1 - £0.25
+16/5 to 4/1 - £0.20
+9/2 to 11/2 - £0.15
+6/1 to 9/1 - £0.10
+10/1 to 14/1 - £0.05p
+over 14/1 - no deduction
+In the event of two or more horses being withdrawn before coming under starter's orders then the total deductions shall not exceed £0.90 in the £.
+Should a horse be withdrawn, and a new market formed then any bets laid at show prices prior to the new show will be subject to the above deductions. In the event of a further withdrawal after the market has been reformed then bets placed at show prices in the original market will be subject to a further deduction based on the price of the withdrawn horse in the original market. Bets placed in the new market will be subject to a deduction based on the current price.
+The above scale will also apply in the case of non-runners in early price races and will be used for other events where we specifically advertise that deductions in line with Rule 4 (Deductions) will apply.
+
+ReRuns
+
+In the event of a false start, etc. resulting in a race being rerun, 'under starter's orders' is negated and stakes will be refunded on horses taking no part in the rerun. Returns on the remaining runners subject to Rule 4 (Deductions). The number of runners taking part in the rerun governs Place terms.
+Walkovers and Void Horse Races
+Walkovers and void races count as races, but any horse so involved will be treated as a non-runner for settlement purposes.
+
+Best Odds Guaranteed (BOG) Rules
+
+If you take the price and the starting price (SP) is bigger, we will pay you out at the bigger price. If you take a price of 4/1 and the selection wins with a SP of 5/1, we pay you 5/1. If the horse wins at odds of 3/1, we pay you 4/1.
+This applies to UK and Ireland horse racing only.
+This applies to early prices, board prices and for singles and multiples.
+This offer applies to new and existing customers.
+This offer does not include Ante-Post/Future Horse Racing, Tote/PMU Pool Bets, any packaged multiple, boosted odds or any other ‘special’ bets.
+In the event of a Rule 4, we will pay out at the bigger odds if applicable, after the Rule 4 deduction has been applied.
+
+First Past The Post (FPTP) rules
+
+First Past The Post (FPTP) or ‘double result’ concession means we will pay out on the horse that crosses the line first, even if they are later disqualified or downgraded in the race.
+FPTP is offered for all UK and Irish Racing only to all single and multiple bets.
+This applies to day of race win and each way markets only
+Staking restrictions do not apply.
+Dead Heat Rules May Apply.
+Circumstances where FPTP does not apply;
+Horses that are disqualified because they failed to weigh in correctly (including wrong weight or jockey failing to weigh in).
+Horses that are disqualified for taking the ‘wrong course’.
+Any subsequent appeal or amendment not on day of the race.
+Races which are declared void.
+Bets on originally placed horses that are demoted.
+Any ‘ante post’ or ‘future horse racing’ bet.
+Bets that are placed on or settled using PMU or Tote odds.
+A correction to a result given in error by the judge prior to the weigh in.
+Any other markets offered including, but not limited to, forecast and tricasts, match bets, distance betting or special bets.
+
+Horse Racing Derivative/additional race markets
+
+Betting Without/ Winner Without Favourite
+
+Where we offer prices on an event without one or more nominated selections, for settlement purposes the finishing position of the 'without' selection(s) will be ignored.
+If there are less than five runners (including named selection(s)) or at least one of the nominated selections is withdrawn, not under starter’s orders, then all bets will be void.
+In the event of a horse that isn’t a named “without” selection being withdrawn, not under starter’s orders, stakes on that selection will be returned. Bets for the remaining horses in the race will be subject to a deduction in accordance with Tattersall’s R4 based on the price in the Betting Without market of the withdrawn horse(s) at the time of withdrawal.
+Each way may be offered on this market and will use the standard each way terms. The number of runners will be those named in the market and will exclude the ‘betting without’ selection(s).
+Dead Heat rules apply.
+Best Odds Guaranteed (BOG) does not apply.
+First Past The Post (FPTP) does not apply.
+
+Place Betting
+
+Place betting markets allow you to predict a horse to finish in the first number of specified places.
+
+In the event of a horse being withdrawn, not under starter’s orders, stakes on that selection will be returned. Bets for the remaining horses in the race will be subject to a percentage deduction in accordance with the Rule 4 table below based on the price in the place only market of the withdrawn horse(s) at the time of withdrawal.
+
+| Price Range at Withdrawal | | Places Offered | | |
+| --- | --- | --- | --- | --- |
+| Decimal | Fractional | 2 | 3 | 4 |
+| Over 15.0 | Over 14/1 | 0 | 0 | 0 |
+| Over 11.0 | Over 10/1 | 5 | 0 | 0 |
+| Over 6.5 | Over 11/2 | 5 | 5 | 5 |
+| Over 5.0 | Over 4/1 | 10 | 5 | 5 |
+| Over 4.0 | Over 3/1 | 15 | 5 | 5 |
+| Over 3.25 | Over 9/4 | 20 | 10 | 5 |
+| Over 2.75 | Over 7/4 | 20 | 10 | 10 |
+| Over 2.5 | Over 6/4 | 25 | 15 | 10 |
+| Over 2.2 | Over 6/5 | 25 | 15 | 10 |
+| Over 1.9 | Over 10/11 | 25 | 20 | 10 |
+| Over 1.8 | Over 4/5 | 30 | 20 | 15 |
+| Over 1.615 | Over 8/13 | 30 | 20 | 15 |
+| Over 1.534 | Over 8/15 | 35 | 25 | 20 |
+| Over 1.4 | Over 2/5 | 35 | 30 | 20 |
+| Over 1.3 | Over 3/10 | 40 | 30 | 20 |
+| Over 1.25 | Over 1/4 | 50 | 35 | 25 |
+| Over 1.181 | Over 2/11 | 50 | 40 | 25 |
+| 1.181 or less | 2/11 or less | 50 | 50 | 25 |
+
+The number of places being paid shall remain constant e.g. If we are originally paying three places and the race is reduced to 7 or less runners we shall still pay 3 places. The only exception to this is when the number of runners is equal to or less than the number of places on offer. In this instance all bets are void.
+
+Dead Heat rules apply.
+
+Best Odds Guaranteed (BOG) does not apply.
+
+First Past The Post (FPTP) does not apply.
+
+Cover Bets
+
+• 2 Places - a price will be offered for the horse to win the race. If the horse finishes second, stakes on that selection will be returned.
+• 3 Places - a price will be offered for the horse to win the race. If the horse finishes second or third, stakes on that selection will be returned.
+• 4 Places - a price will be offered for the horse to win the race. If the horse finishes second or third or fourth, stakes on that selection will be returned.
+In the event of a horse being withdrawn, not under starter’s orders, stakes on that selection will be returned. Bets for the remaining horses in the race will be subject to a deduction in accordance with Tattersall’s R4 based on the price in the Cover Bet market of the withdrawn horse(s) at the time of withdrawal.
+Dead Heat rules apply.
+Best Odds Guaranteed (BOG) does not apply.
+First Past The Post (FPTP) does not apply.
+
+Favourites v Outsiders
+
+These markets are grouped match bets whereby a runner (or runners) with short prices (Favourites) are matched against all other runners in the race (Outsiders). The group containing the winning runner is settled as a winning selection.If a named Favourite is withdrawn, not under starter’s orders, then all bets will be voided/returned. If an Outsider with a price of 6/1 or shorter is withdrawn, not under starter’s orders, then all bets will be voided/returned.
+Dead Heat rules apply.
+Best Odds Guaranteed (BOG) does not apply.
+First Past The Post (FPTP) does not apply.
+
+Threesomes
+
+These markets are grouped match bets whereby three named runners are matched against another three named runners in a race. Betting is on which group has the highest finishing runner.
+If a named runner is withdrawn, not under starter’s orders, then all bets will be voided/returned.
+Dead Heat rules apply.
+Best Odds Guaranteed (BOG) does not apply.
+First Past The Post (FPTP) does not apply.
+
+Match Bets
+
+Betting is on which horse has the best finishing position (1st being the best).
+If one horse in a match fails to complete, or takes the wrong course, the other will be considered to have won the match. If neither horse finishes, bets will be void.
+If a named runner is withdrawn, not under starter’s orders, then all bets will be voided/returned.
+Dead Heat rules apply.
+Best Odds Guaranteed (BOG) does not apply.
+First Past The Post (FPTP) does not apply.
+
+Distance Betting
+
+The winning distance is the distance between the official winner and the official 2nd placed horse. Distances are taken from the official race result and are in ‘lengths’. Where the distance is less than a ¼ length the following fractions apply – Short head (0.1), Head (0.2), Neck 0.3, Nose (0.05).
+
+UK and Ireland Horse Racing
+
+Horseracing data licensed from the British Horseracing Board Limited.
+If no official SP is returned, if no price is taken, then all bets will be settled at the last Industry show passed. If no Industry show is given, then bets will be settled at Tote odds.
+If on the day of a race the surface is altered (e.g. Turf to All Weather or vice versa), then bets will stand.
+
+Non UK and Ireland
+
+For some of the major overseas horse races an industry SP and Forecast/Tricast may be declared. In these cases, if no price is taken and Tote (Pari-mutuel) is not requested, then bets will be settled based on the industry declared SP and Forecast/Tricast dividends. Normal place terms will apply for Each-way betting.
+If on the day of a race the surface is altered (e.g. Turf to All Weather or vice versa), then bets will stand.
+
+Horse Racing Specials
+
+For 'Final/Declared Field' specials such as Daily Boosts, Special enhanced prices etc. Best Odds Guaranteed and Rule 4 does not apply. If a named selection is a non runner, bets are void/returned. For 'Final/Declared Field' Special Double/Multiples if any of the named selections does not run the entire bet is void/returned. Best Odds Guaranteed (BOG) and Rule 4 does not apply. For Ante Post/Future Horse Racing specials, selections are all in run or not.

@@ -1,0 +1,16 @@
+<p>GetMaxBetAmount</p><div><p>The <a href="../documentation?currentLoc=betGuard&amp;location=get_max_bet_amount"> GetMaxBetAmount</a> endpoint returns the <strong>maximum allowable stake</strong> for a specific selection or bet combination. This call helps Partners determine the betting limits before placing a bet, ensuring that submitted stakes do not exceed the platform’s predefined thresholds.</p><p>Same as in case of <a href="../documentation?currentLoc=betGuard&amp;location=createBet">CreateBet</a>, if the mandatory fields of <strong>ClientDetailModel</strong> are not sent, <strong>FC</strong> calls <a href="../documentation?currentLoc=betGuard&amp;location=partner_api_get_client_details">GetClientDetails</a> to identify the client and validate applicable stake limits. After getting the response, FC does</p><div><ul><li>Client identification.</li><li>Risk assessment.</li><li>Max stake calculation and response delivery.</li></ul></div><p>The processes described in 4, 5, 6, 10 points of the Process Flow - Bet Placement via Betguard API are actual here</p><div><div><div><div><div><div><table><thead><tr><td><div><div><div><label>Request URL Sample</label><div><input/><fieldset><legend><span>Request URL Sample</span></legend></fieldset></div></div></div></div></td><td><div><div><div><label>Request Body</label><div><input/><fieldset><legend><span>Request Body</span></legend></fieldset></div></div></div></div></td><td><div><div><div><label>Response</label><div><input/><fieldset><legend><span>Response</span></legend></fieldset></div></div></div></div></td><td></td></tr></thead><tbody><tr><td>http://hostname/api/LangId/PartnerId/Bet/GetMaxBetAmount
+        
+         Method: POST
+         
+                    .../api/en/290/Bet/GetMaxBetAmount
+</td><td>Request BetModel (see in CreateBet part)</td><td>Success---------ResponseWrapper
+                          {
+         StatusCode=”0”,                                     
+                     Data=MaxBetResponse
+                           }
+Error-----------ResponseWrapper
+                           {
+                       StatusCode=errorCode,
+                                 Data=errorMessage
+                            }
+</td></tr></tbody></table></div></div></div></div></div><br/><li>MaxBetResponse</li><div><div><div><div><div><table><thead><tr><td><div><div><div><label>Field Name</label><div><input/><fieldset><legend><span>Field Name</span></legend></fieldset></div></div></div></div></td><td><div><div><div><label>Type</label><div><input/><fieldset><legend><span>Type</span></legend></fieldset></div></div></div></div></td><td><div><div><div><label>Description</label><div><input/><fieldset><legend><span>Description</span></legend></fieldset></div></div></div></div></td><td></td></tr></thead><tbody><tr><td>MaxBetAmount</td><td>decimal</td><td>The max stake that can be used to place the bet</td></tr></tbody></table></div></div></div></div></div></div></div>
