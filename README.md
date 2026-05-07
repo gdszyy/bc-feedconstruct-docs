@@ -26,10 +26,11 @@
 | `raw/html/` | 每个页面的规范化原始 HTML 备份 |
 | `raw/json/` | 浏览器抓取原始 JSON |
 | `AGENTS.md` | AI 代理阅读本仓库时的入口与路由规范 |
+| `docs/07_architecture/` | 基于公开文档综合整理的架构拆分、集成建议与专题设计 |
 
 ## 推荐阅读入口
 
-一般应先阅读 [`indexes/BUSINESS_DOMAIN_INDEX.md`](indexes/BUSINESS_DOMAIN_INDEX.md)，然后根据目标能力进入对应目录。若要对接 BC 数据源服务，建议从 `docs/01_data_feed/rmq-web-api/` 和 `docs/01_data_feed/tcp-socket-api/` 开始。若要对接投注风控服务，建议从 `docs/06_betguard_risk/betguard/` 开始。
+一般应先阅读 [`indexes/BUSINESS_DOMAIN_INDEX.md`](indexes/BUSINESS_DOMAIN_INDEX.md)，然后根据目标能力进入对应目录。若要对接 BC 数据源服务，建议从 `docs/01_data_feed/rmq-web-api/` 和 `docs/01_data_feed/tcp-socket-api/` 开始。若要对接投注风控服务，建议从 `docs/06_betguard_risk/betguard/` 开始。若要先理解数据源与分控投注模块的系统边界，建议阅读 [`docs/07_architecture/001_bc_oddsfeed_betguard_split.md`](docs/07_architecture/001_bc_oddsfeed_betguard_split.md)。
 
 | 业务域 | 目录 | 说明 |
 |---|---|---|
@@ -39,6 +40,7 @@
 | 体育博彩业务规则 | `docs/04_sportsbook_rules/` | Sportsbook Notes 与 Sports Rules |
 | 赔率与计算 | `docs/05_odds_math/` | Odds Conversion |
 | 投注风控服务 / BetGuard | `docs/06_betguard_risk/` | BetGuard 流程、安全校验、下注、派彩、状态查询与报表接口 |
+| 架构设计专题 | `docs/07_architecture/` | OddsFeed 数据源与 BetGuard 分控投注模块拆分等综合设计 |
 
 ## References
 
