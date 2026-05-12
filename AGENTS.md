@@ -4,7 +4,7 @@
 
 ## 入口策略
 
-如果任务涉及接口接入、消息结构、对象字段或 SDK，请从 `indexes/NAVIGATION.md` 按文档站模块进入。如果任务涉及业务理解、系统集成分层或数据商能力梳理，请从 `indexes/BUSINESS_DOMAIN_INDEX.md` 进入。如果任务只提供关键词，如 BetGuard、RabbitMQ、Market、Settlement、SDK，请优先读取 `indexes/KEYWORD_INDEX.md` 或 `indexes/SEARCH_INDEX.json`。
+如果任务涉及接口接入、消息结构、对象字段或 SDK，请从 `indexes/NAVIGATION.md` 按文档站模块进入。如果任务涉及业务理解、系统集成分层或数据商能力梳理，请从 `indexes/BUSINESS_DOMAIN_INDEX.md` 进入。如果任务只提供关键词，如 BetGuard、RabbitMQ、Market、Settlement、SDK，请优先读取 `indexes/KEYWORD_INDEX.md` 或 `indexes/SEARCH_INDEX.json`。如果任务涉及前端模块/页面/Go BFF↔Next.js 契约，请从 `docs/07_frontend_architecture/README.md` 进入。
 
 ## 模块路由表
 
@@ -17,6 +17,7 @@
 | 结算、玩法规则、Sportsbook 规则 | `docs/04_sportsbook_rules/` |
 | 赔率转换 | `docs/05_odds_math/` |
 | 投注风控、下注、派彩、状态查询 | `docs/06_betguard_risk/betguard/` |
+| 前端架构规划、模块/页面骨架、Go BFF↔Next.js 契约 | `docs/07_frontend_architecture/` |
 
 ## 维护规则
 
