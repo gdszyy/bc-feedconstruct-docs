@@ -2,6 +2,12 @@
 
 本索引由 `https://oddsfeed.feedconstruct.com/documentation?currentLoc=oddsFeedRmqAndWebApi&location=summary` 的公开访客文档抓取生成。原始抓取页面数为 **261**，按 `currentLoc + location` 去重后的 Markdown 页面数为 **249**。
 
+## 本地规划文档（非外部抓取）
+
+| 路径 | 用途 |
+|---|---|
+| [`docs/07_frontend_architecture/README.md`](../docs/07_frontend_architecture/README.md) | 体育博彩前端数据来源整体方案：模块（M01~M16）、页面（P01~P08）骨架、Go BFF↔Next.js 契约、状态机、验收清单。 |
+
 ## 按一级文档模块索引
 
 ### RABBIT MQ (`oddsFeedRmqAndWebApi`)
