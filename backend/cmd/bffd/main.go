@@ -19,7 +19,9 @@ import (
 
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/config"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/feed"
+	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/recovery"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/storage"
+	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/webapi"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/migrations"
 )
 
@@ -68,6 +70,11 @@ func run() int {
 	repo := storage.NewRawMessageRepo(pool)
 	disp := feed.NewDispatcher(nil)
 	proc := feed.NewProcessor(repo, pub, disp)
+
+	// Recovery coordinator (live mode only). RECOVERY_INITIAL schedules a
+	// startup snapshot before the live consumer attaches so the BFF starts
+	// with a coherent state.
+	startRecovery(rootCtx, cfg, pool)
 
 	feedErrCh := make(chan error, 1)
 	go func() { feedErrCh <- runFeed(rootCtx, cfg, proc) }()
@@ -144,6 +151,40 @@ func startPublisher(cfg *config.Config) feed.Publisher {
 	}
 	fmt.Fprintln(os.Stdout, "bffd: internal RabbitMQ exchange ready (feed.events)")
 	return pub
+}
+
+// startRecovery wires the recovery coordinator and triggers an initial
+// startup snapshot when running against a live FeedConstruct endpoint.
+// In replay mode (no credentials) it is a no-op.
+func startRecovery(ctx context.Context, cfg *config.Config, pool *storage.Pool) {
+	if cfg.Mode != config.ModeLive {
+		return
+	}
+	if !cfg.RecoveryInitial {
+		fmt.Fprintln(os.Stdout, "bffd: RECOVERY_INITIAL=false; skipping startup snapshot")
+		return
+	}
+	api := webapi.New(cfg.FCAPIBase, cfg.FCAPIUser, cfg.FCAPIPass, webapi.Options{})
+	coord := recovery.New(pool, api, nil, recovery.Options{})
+
+	bootCtx, cancel := context.WithTimeout(ctx, 60*time.Second)
+	defer cancel()
+	id, err := coord.ScheduleStartup(bootCtx)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "bffd: schedule startup recovery: %v\n", err)
+		return
+	}
+	go func() {
+		// Drain the queue once at boot. The live consumer takes over
+		// streaming updates; long-running recovery loops are added later.
+		runCtx, runCancel := context.WithTimeout(context.Background(), 5*time.Minute)
+		defer runCancel()
+		if _, err := coord.RunOnce(runCtx); err != nil {
+			fmt.Fprintf(os.Stderr, "bffd: startup recovery (job %d): %v\n", id, err)
+		} else {
+			fmt.Fprintf(os.Stdout, "bffd: startup recovery (job %d) submitted\n", id)
+		}
+	}()
 }
 
 func runFeed(ctx context.Context, cfg *config.Config, proc *feed.Processor) error {
