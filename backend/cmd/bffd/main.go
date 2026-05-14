@@ -23,6 +23,7 @@ import (
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/odds"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/settlement"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/storage"
+	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/subscription"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/migrations"
 )
 
@@ -92,6 +93,39 @@ func run() int {
 		fmt.Fprintf(os.Stdout, "bffd: settlement.skip.unknown_match match_id=%d kind=%s\n", matchID, kind)
 	})
 	settlementHandler.Register(disp)
+
+	subscriptionRepo := subscription.NewPgRepo(pool)
+	subscriptionManager := subscription.New(subscriptionRepo)
+	subscriptionManager.Grace = 5 * time.Minute
+	subscriptionManager.Register(disp)
+	// Compose the catalog and subscription handlers for fixture_change:
+	// catalog owns the upsert, subscription reacts to terminal status.
+	catalogFixture := catalogHandler.HandleMatch
+	disp.Register(feed.MsgFixtureChange, feed.HandlerFunc(func(ctx context.Context, mt feed.MessageType, env feed.Envelope, rawID [16]byte) error {
+		if err := catalogFixture(ctx, mt, env, rawID); err != nil {
+			return err
+		}
+		return subscriptionManager.HandleFixtureChange(ctx, mt, env, rawID)
+	}))
+
+	// Periodic ticks for the auto-release queue and stuck-request guard.
+	subTicker := time.NewTicker(30 * time.Second)
+	go func() {
+		defer subTicker.Stop()
+		for {
+			select {
+			case <-rootCtx.Done():
+				return
+			case <-subTicker.C:
+				if _, err := subscriptionManager.ProcessDueReleases(rootCtx); err != nil {
+					fmt.Fprintf(os.Stderr, "bffd: subscription.release: %v\n", err)
+				}
+				if _, err := subscriptionManager.CleanupStuckRequests(rootCtx); err != nil {
+					fmt.Fprintf(os.Stderr, "bffd: subscription.stuck_cleanup: %v\n", err)
+				}
+			}
+		}
+	}()
 
 	proc := feed.NewProcessor(repo, pub, disp)
 
