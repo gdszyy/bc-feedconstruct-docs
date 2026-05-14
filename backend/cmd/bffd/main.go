@@ -21,6 +21,7 @@ import (
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/config"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/feed"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/odds"
+	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/settlement"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/storage"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/migrations"
 )
@@ -84,6 +85,13 @@ func run() int {
 			ev.MatchID, ev.MarketTypeID, ev.Specifier, ev.From, ev.To)
 	})
 	oddsHandler.Register(disp)
+
+	settlementRepo := settlement.NewPgRepo(pool)
+	settlementHandler := settlement.New(settlementRepo)
+	settlementHandler.Logger = settlement.LoggerFunc(func(matchID int64, kind string) {
+		fmt.Fprintf(os.Stdout, "bffd: settlement.skip.unknown_match match_id=%d kind=%s\n", matchID, kind)
+	})
+	settlementHandler.Register(disp)
 
 	proc := feed.NewProcessor(repo, pub, disp)
 
