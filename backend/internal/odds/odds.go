@@ -1,4 +1,6 @@
-// Package odds processes odds_change and bet_stop messages, maintaining
-// markets / outcomes / market_status_history.
-// Maps to upload-guideline 业务域 "赔率数据" + "停投状态" (M05/M06/M07).
+// Package odds processes odds_change and bet_stop deliveries, maintaining
+// the markets, outcomes and market_status_history tables.
+//
+// Maps to acceptance #5 (赔率), #6 (停投) and #12 market-level (防回退):
+// settled/cancelled markets must not be re-activated by a late odds_change.
 package odds

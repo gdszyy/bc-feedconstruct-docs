@@ -20,6 +20,7 @@ import (
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/catalog"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/config"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/feed"
+	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/odds"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/recovery"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/storage"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/webapi"
@@ -74,6 +75,9 @@ func run() int {
 	// Register catalog handler (M03/M04 — sport/region/competition/match
 	// upserts + fixture_changes history with no-regression enforcement).
 	catalog.New(pool).Register(disp)
+	// Register odds handler (M05/M06/M07 — odds_change + bet_stop with
+	// market-level no-regression and market_status_history).
+	odds.New(pool).Register(disp)
 
 	proc := feed.NewProcessor(repo, pub, disp)
 
