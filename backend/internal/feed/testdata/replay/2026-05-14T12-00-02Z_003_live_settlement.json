@@ -1,0 +1,11 @@
+{
+  "objectType": 13,
+  "matchId": 42,
+  "sportId": 1,
+  "timestamp": "2026-05-14T12:00:02Z",
+  "settled": true,
+  "outcomes": [
+    { "id": 101, "result": "win", "certainty": 1 },
+    { "id": 102, "result": "lose", "certainty": 1 }
+  ]
+}

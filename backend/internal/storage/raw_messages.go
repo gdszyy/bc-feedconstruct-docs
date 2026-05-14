@@ -40,6 +40,22 @@ type RawMessageRepo struct{ pool *Pool }
 
 func NewRawMessageRepo(pool *Pool) *RawMessageRepo { return &RawMessageRepo{pool: pool} }
 
+// Pool exposes the underlying pgx pool for callers that need to issue
+// ancillary statements in the same database (e.g. setting process_error).
+func (r *RawMessageRepo) Pool() *Pool { return r.pool }
+
+// MarkProcessError records a non-recoverable processing error on the
+// raw_messages row. Best-effort; failures here are surfaced so callers
+// can retry on the next poll.
+func (r *RawMessageRepo) MarkProcessError(ctx context.Context, id [16]byte, msg string) error {
+	const q = `UPDATE raw_messages SET processed_at = now(), process_error = $2 WHERE id = $1`
+	_, err := r.pool.Exec(ctx, q, id, msg)
+	if err != nil {
+		return fmt.Errorf("storage: mark process_error: %w", err)
+	}
+	return nil
+}
+
 // Insert writes the message; if a row with the same idempotency key
 // already exists it returns Inserted=false with the existing ID.
 func (r *RawMessageRepo) Insert(ctx context.Context, m RawMessage) (InsertResult, error) {

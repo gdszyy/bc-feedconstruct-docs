@@ -1,6 +1,14 @@
-// Package feed connects to the FeedConstruct RMQ source (or replays raw/json
-// samples) and persists every delivery into raw_messages before fan-out.
+// Package feed implements the M01 ingest layer: it connects to (or replays)
+// the FeedConstruct source, decompresses GZIP, parses envelopes, persists
+// every delivery into raw_messages BEFORE any business handler runs, and
+// fans out into the internal RabbitMQ exchange "feed.events".
 //
-// Maps to upload-guideline 业务域 "连接接入" + "原始消息" (M01).
-// BDD scaffold — see *_test.go in this package.
+// Module split:
+//   - envelope.go : Envelope type + classification rules
+//   - decoder.go  : GZIP-aware body decoder
+//   - dispatcher.go : handler registry (M02)
+//   - publisher.go  : Publisher interface + AMQPPublisher implementation
+//   - processor.go  : decode -> store raw_messages -> publish
+//   - replayer.go   : FEED_MODE=replay file source
+//   - live_consumer.go : FEED_MODE=live FC RMQ source
 package feed

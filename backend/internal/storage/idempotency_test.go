@@ -5,6 +5,7 @@ package storage_test
 import (
 	"context"
 	"os"
+	"sync"
 	"testing"
 	"time"
 
@@ -14,31 +15,46 @@ import (
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/migrations"
 )
 
-func newTestPool(t *testing.T) *storage.Pool {
+var (
+	sharedPool *storage.Pool
+	sharedOnce sync.Once
+	sharedErr  error
+)
+
+// getSharedPool migrates the schema exactly once per test process. Each
+// test truncates the tables it touches via cleanTables.
+func getSharedPool(t *testing.T) *storage.Pool {
 	t.Helper()
 	dsn := os.Getenv("INTEGRATION_DSN")
 	if dsn == "" {
 		t.Skip("INTEGRATION_DSN not set; skipping storage integration tests")
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	sharedOnce.Do(func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		p, err := storage.NewPool(ctx, dsn)
+		if err != nil {
+			sharedErr = err
+			return
+		}
+		if _, err := storage.MigrateFromFS(ctx, p, migrations.FS()); err != nil {
+			sharedErr = err
+			return
+		}
+		sharedPool = p
+	})
+	require.NoError(t, sharedErr)
+	return sharedPool
+}
+
+func cleanTables(t *testing.T, pool *storage.Pool, tables ...string) {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	pool, err := storage.NewPool(ctx, dsn)
-	require.NoError(t, err)
-
-	// Each test gets a clean slate by truncating the tables we touch.
-	_, err = pool.Exec(ctx, `
-		DROP TABLE IF EXISTS raw_messages CASCADE;
-		DROP TABLE IF EXISTS metrics_counters CASCADE;
-		DROP TABLE IF EXISTS schema_migrations CASCADE;
-	`)
-	require.NoError(t, err)
-
-	applied, err := storage.MigrateFromFS(ctx, pool, migrations.FS())
-	require.NoError(t, err)
-	require.NotEmpty(t, applied, "expected migrations to be applied to a fresh schema")
-
-	t.Cleanup(func() { pool.Close() })
-	return pool
+	for _, tbl := range tables {
+		_, err := pool.Exec(ctx, "TRUNCATE TABLE "+tbl+" RESTART IDENTITY CASCADE")
+		require.NoError(t, err)
+	}
 }
 
 // 验收 11 — 幂等
@@ -47,7 +63,8 @@ func newTestPool(t *testing.T) *storage.Pool {
 // When the same delivery is consumed again
 // Then the unique constraint blocks the second insert and the count stays at 1
 func TestGiven_DuplicateDelivery_When_InsertRawMessage_Then_UniqueConstraintHolds(t *testing.T) {
-	pool := newTestPool(t)
+	pool := getSharedPool(t)
+	cleanTables(t, pool, "raw_messages", "metrics_counters")
 	repo := storage.NewRawMessageRepo(pool)
 	ctx := context.Background()
 
@@ -80,7 +97,8 @@ func TestGiven_DuplicateDelivery_When_InsertRawMessage_Then_UniqueConstraintHold
 // When both are inserted
 // Then both rows are written (different idempotency keys)
 func TestGiven_DistinctTSProvider_When_Insert_Then_BothRowsWritten(t *testing.T) {
-	pool := newTestPool(t)
+	pool := getSharedPool(t)
+	cleanTables(t, pool, "raw_messages", "metrics_counters")
 	repo := storage.NewRawMessageRepo(pool)
 	ctx := context.Background()
 
@@ -111,11 +129,11 @@ func TestGiven_DistinctTSProvider_When_Insert_Then_BothRowsWritten(t *testing.T)
 // When the retention job runs
 // Then those rows are deleted and metrics_counters.retention_deleted increments
 func TestGiven_RawMessagesPastRetention_When_RetentionJobRuns_Then_RowsDeletedAndCounterIncrements(t *testing.T) {
-	pool := newTestPool(t)
+	pool := getSharedPool(t)
+	cleanTables(t, pool, "raw_messages", "metrics_counters")
 	repo := storage.NewRawMessageRepo(pool)
 	ctx := context.Background()
 
-	// Insert two old + one fresh row.
 	old1 := time.Now().Add(-10 * 24 * time.Hour)
 	old2 := time.Now().Add(-8 * 24 * time.Hour)
 	fresh := time.Now().Add(-1 * time.Hour)

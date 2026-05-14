@@ -46,6 +46,11 @@ type Config struct {
 
 	RecoveryInitial bool
 	LogLevel        string
+
+	// ReplayDir is the directory of JSON / JSON.gz fixtures the replay
+	// mode iterates through. Defaults to backend/internal/feed/testdata/replay
+	// when unset, so the binary boots usefully out of the box.
+	ReplayDir string
 }
 
 // MissingEnvError lists the env var names whose absence prevented load.
@@ -74,6 +79,7 @@ func Load() (*Config, error) {
 		FCPartnerID:      os.Getenv("FC_PARTNER_ID"),
 		RecoveryInitial:  parseBool(os.Getenv("RECOVERY_INITIAL"), true),
 		LogLevel:         defaultStr(os.Getenv("LOG_LEVEL"), "info"),
+		ReplayDir:        os.Getenv("REPLAY_DIR"),
 	}
 
 	missing := []string{}

@@ -1,8 +1,9 @@
 // Package main is the entrypoint for the BFF service.
 //
-// At this stage (BDD wave 1) the binary loads config, opens a Postgres pool,
-// runs migrations and serves /healthz + /readyz. Feed consumers, handlers and
-// the WebSocket hub are wired in subsequent waves.
+// Wave 2: in addition to /healthz + /readyz, the binary now starts the
+// feed ingest pipeline. FEED_MODE=replay reads JSON fixtures from
+// REPLAY_DIR (default: backend/internal/feed/testdata/replay) while
+// FEED_MODE=live consumes both FeedConstruct partner queues.
 package main
 
 import (
@@ -17,6 +18,7 @@ import (
 	"time"
 
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/config"
+	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/feed"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/storage"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/migrations"
 )
@@ -57,8 +59,20 @@ func run() int {
 		fmt.Fprintf(os.Stdout, "bffd: migrated %s\n", name)
 	}
 
+	// Optional internal RabbitMQ publisher. If the broker is unreachable
+	// at boot we fall back to NopPublisher rather than blocking startup;
+	// the bind error is logged so operators see it.
+	pub := startPublisher(cfg)
+	defer func() { _ = pub.Close() }()
+
+	repo := storage.NewRawMessageRepo(pool)
+	disp := feed.NewDispatcher(nil)
+	proc := feed.NewProcessor(repo, pub, disp)
+
+	feedErrCh := make(chan error, 1)
+	go func() { feedErrCh <- runFeed(rootCtx, cfg, proc) }()
+
 	var ready atomic.Bool
-	// At this wave the only readiness gate is Postgres + migrations.
 	ready.Store(true)
 
 	mux := http.NewServeMux()
@@ -86,19 +100,29 @@ func run() int {
 		ReadHeaderTimeout: 10 * time.Second,
 	}
 
-	errCh := make(chan error, 1)
+	httpErrCh := make(chan error, 1)
 	go func() {
 		fmt.Fprintf(os.Stdout, "bffd: listening on :%s\n", cfg.Port)
-		errCh <- srv.ListenAndServe()
+		httpErrCh <- srv.ListenAndServe()
 	}()
 
 	select {
 	case <-rootCtx.Done():
 		fmt.Fprintln(os.Stdout, "bffd: shutdown signal received")
-	case err := <-errCh:
+	case err := <-httpErrCh:
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			fmt.Fprintf(os.Stderr, "bffd: serve: %v\n", err)
+			cancel()
+			<-feedErrCh
 			return 1
+		}
+	case err := <-feedErrCh:
+		// Replayer completes naturally; live consumer only returns on error
+		// or ctx cancellation.
+		if err != nil && !errors.Is(err, context.Canceled) && !errors.Is(err, context.DeadlineExceeded) {
+			fmt.Fprintf(os.Stderr, "bffd: feed: %v\n", err)
+		} else {
+			fmt.Fprintln(os.Stdout, "bffd: feed loop finished")
 		}
 	}
 
@@ -106,4 +130,49 @@ func run() int {
 	defer shutCancel()
 	_ = srv.Shutdown(shutCtx)
 	return 0
+}
+
+func startPublisher(cfg *config.Config) feed.Publisher {
+	if cfg.RabbitMQURL == "" {
+		fmt.Fprintln(os.Stdout, "bffd: RABBITMQ_URL empty; using NopPublisher")
+		return feed.NopPublisher{}
+	}
+	pub, err := feed.NewAMQPPublisher(cfg.RabbitMQURL)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "bffd: internal rabbitmq unavailable, falling back to NopPublisher: %v\n", err)
+		return feed.NopPublisher{}
+	}
+	fmt.Fprintln(os.Stdout, "bffd: internal RabbitMQ exchange ready (feed.events)")
+	return pub
+}
+
+func runFeed(ctx context.Context, cfg *config.Config, proc *feed.Processor) error {
+	switch cfg.Mode {
+	case config.ModeReplay:
+		dir := cfg.ReplayDir
+		if dir == "" {
+			dir = "internal/feed/testdata/replay"
+		}
+		rep := &feed.Replayer{Dir: dir, Processor: proc, Source: "replay"}
+		fmt.Fprintf(os.Stdout, "bffd: replay mode, reading %s\n", dir)
+		n, err := rep.Run(ctx)
+		fmt.Fprintf(os.Stdout, "bffd: replay finished, %d deliveries processed\n", n)
+		return err
+	case config.ModeLive:
+		lc := &feed.LiveConsumer{
+			Cfg: feed.LiveConsumerConfig{
+				Host:      cfg.FCRMQHost,
+				User:      cfg.FCRMQUser,
+				Pass:      cfg.FCRMQPass,
+				PartnerID: cfg.FCPartnerID,
+				UseTLS:    cfg.FCRMQTLS,
+			},
+			Processor: proc,
+		}
+		fmt.Fprintf(os.Stdout, "bffd: live mode, connecting to %s (partner=%s, tls=%t)\n",
+			cfg.FCRMQHost, cfg.FCPartnerID, cfg.FCRMQTLS)
+		return lc.Run(ctx)
+	default:
+		return fmt.Errorf("bffd: unknown FEED_MODE %q", cfg.Mode)
+	}
 }
