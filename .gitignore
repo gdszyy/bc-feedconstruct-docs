@@ -1,3 +1,27 @@
 __pycache__/
 .DS_Store
 *.tmp
+
+# Local env
+.env
+.env.local
+.env.*.local
+
+# Go
+backend/bin/
+backend/vendor/
+*.test
+*.out
+
+# Node / Next.js
+frontend/node_modules/
+frontend/.next/
+frontend/.turbo/
+frontend/out/
+frontend/coverage/
+node_modules/
+
+# Docker / runtime
+docker/data/
+postgres-data/
+rabbitmq-data/

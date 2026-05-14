@@ -1,0 +1,87 @@
+version: "3.9"
+
+# 本地 4 服务编排，与 Railway 4 服务拓扑对齐：
+#   postgres + rabbitmq + bff + web
+#
+# 使用：
+#   cp .env.example .env.local
+#   docker compose --env-file .env.local up --build
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: bff
+      POSTGRES_PASSWORD: bff
+      POSTGRES_DB: bff
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bff -d bff"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    restart: unless-stopped
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  bff:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      PORT: "8080"
+      DATABASE_URL: postgres://bff:bff@postgres:5432/bff?sslmode=disable
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
+      FEED_MODE: ${FEED_MODE:-replay}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      RECOVERY_INITIAL: ${RECOVERY_INITIAL:-true}
+      WS_ALLOWED_ORIGINS: ${WS_ALLOWED_ORIGINS:-http://localhost:3000}
+      FC_API_BASE: ${FC_API_BASE:-}
+      FC_API_USER: ${FC_API_USER:-}
+      FC_API_PASS: ${FC_API_PASS:-}
+      FC_RMQ_HOST: ${FC_RMQ_HOST:-}
+      FC_RMQ_USER: ${FC_RMQ_USER:-}
+      FC_RMQ_PASS: ${FC_RMQ_PASS:-}
+      FC_RMQ_TLS: ${FC_RMQ_TLS:-true}
+      FC_PARTNER_ID: ${FC_PARTNER_ID:-}
+    ports:
+      - "8080:8080"
+
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - bff
+    environment:
+      PORT: "3000"
+      NEXT_PUBLIC_BFF_HTTP: ${NEXT_PUBLIC_BFF_HTTP:-http://localhost:8080}
+      NEXT_PUBLIC_BFF_WS: ${NEXT_PUBLIC_BFF_WS:-ws://localhost:8080/ws}
+    ports:
+      - "3000:3000"
+
+volumes:
+  postgres-data:
+  rabbitmq-data:

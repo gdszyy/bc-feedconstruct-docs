@@ -1,0 +1,11 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "build": {
+    "builder": "NIXPACKS"
+  },
+  "deploy": {
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 5
+  },
+  "_comment": "Multi-service repo: 实际部署使用 backend/railway.json 与 frontend/railway.json。Postgres / RabbitMQ 通过 Railway 插件添加，不在此文件描述。"
+}

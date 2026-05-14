@@ -41,6 +41,22 @@
 | 赔率与计算 | `docs/05_odds_math/` | Odds Conversion |
 | 投注风控服务 / BetGuard | `docs/06_betguard_risk/` | BetGuard 流程、安全校验、下注、派彩、状态查询与报表接口 |
 | 架构设计专题 | `docs/07_architecture/` | OddsFeed 数据源与 BetGuard 分控投注模块拆分等综合设计 |
+| 前端架构规划 | `docs/07_frontend_architecture/` | Go BFF ↔ Next.js 契约、模块/页面骨架、验收清单 |
+| 后端 Railway 骨架 | `docs/08_backend_railway/` | Railway 4 服务拓扑 + Postgres schema + AMQP 集成 + 后端验收清单 |
+
+## 可部署到 Railway 的实现骨架（BDD 阶段）
+
+仓库现包含一份**全栈骨架**，按上传指引《体育博彩数据源接入说明指引》落地，对应 Railway **4 个服务**：`bff`（Go）+ `web`（Next.js）+ `postgres` + `rabbitmq`。
+
+| 路径 | 内容 |
+|---|---|
+| `backend/` | Go BFF 包结构 + `cmd/` 入口 + `Dockerfile` + `railway.json` + Postgres 迁移占位 |
+| `frontend/` | Next.js (App Router, TypeScript) 骨架 + `Dockerfile` + `railway.json` |
+| `docker-compose.yml` | 本地一键拉起 4 服务（postgres/rabbitmq/bff/web） |
+| `.env.example` | 环境变量样板（**不含**真实 FeedConstruct 凭证） |
+| `docs/08_backend_railway/` | 后端拓扑、Postgres schema、AMQP 契约、模块划分、验收清单 |
+
+> 当前处于 `CLAUDE.md` 规定的 **BDD "空测试"阶段**：所有测试文件只含 Given-When-Then 注释与函数名，没有正式断言；生产代码只有最小占位（健康检查可用、main 可编译）。补正式测试与实现需经 `AskUserQuestion` 确认。详见 [`docs/08_backend_railway/README.md`](docs/08_backend_railway/README.md)。
 
 ## References
 
