@@ -1,0 +1,12 @@
+{
+  "objectType": 4,
+  "matchId": 42,
+  "sportId": 1,
+  "name": "A vs B",
+  "home": "A",
+  "away": "B",
+  "startAt": "2026-05-14T12:00:00Z",
+  "status": "live",
+  "isLive": true,
+  "timestamp": "2026-05-14T11:59:59Z"
+}

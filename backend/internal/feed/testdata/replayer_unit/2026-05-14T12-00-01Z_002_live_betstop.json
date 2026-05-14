@@ -2,8 +2,6 @@
   "objectType": 13,
   "matchId": 42,
   "sportId": 1,
-  "marketTypeId": 1,
-  "specifier": "",
   "timestamp": "2026-05-14T12:00:01Z",
   "type": "bet_stop",
   "marketStatus": "suspended"

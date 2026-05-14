@@ -2,9 +2,11 @@
   "objectType": 13,
   "matchId": 42,
   "sportId": 1,
+  "marketTypeId": 1,
+  "specifier": "",
   "timestamp": "2026-05-14T12:00:00Z",
-  "selections": [
-    { "id": 101, "odds": 1.85, "active": true },
-    { "id": 102, "odds": 2.10, "active": true }
+  "outcomes": [
+    { "id": 101, "odds": 1.85, "isActive": true },
+    { "id": 102, "odds": 2.10, "isActive": true }
   ]
 }

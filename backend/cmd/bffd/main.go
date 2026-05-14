@@ -20,6 +20,7 @@ import (
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/catalog"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/config"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/feed"
+	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/odds"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/storage"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/migrations"
 )
@@ -75,6 +76,14 @@ func run() int {
 		fmt.Fprintf(os.Stdout, "bffd: status.regress.blocked match_id=%d from=%s to=%s\n", ev.MatchID, ev.From, ev.To)
 	})
 	catalogHandler.Register(disp)
+
+	oddsRepo := odds.NewPgRepo(pool)
+	oddsHandler := odds.New(oddsRepo)
+	oddsHandler.Logger = odds.LoggerFunc(func(ev odds.AntiRegressionEvent) {
+		fmt.Fprintf(os.Stdout, "bffd: market.status.regress.blocked match_id=%d market_type=%d specifier=%q from=%s to=%s\n",
+			ev.MatchID, ev.MarketTypeID, ev.Specifier, ev.From, ev.To)
+	})
+	oddsHandler.Register(disp)
 
 	proc := feed.NewProcessor(repo, pub, disp)
 
