@@ -87,7 +87,7 @@ func TestGiven_TestdataDir_When_ReplayerRuns_Then_OrderedAndIdempotent(t *testin
 
 	proc := feed.NewProcessor(repo, pub, disp)
 
-	dir, err := filepath.Abs("testdata/replay")
+	dir, err := filepath.Abs("testdata/replayer_unit")
 	require.NoError(t, err)
 	rep := &feed.Replayer{Dir: dir, Processor: proc, Source: "replay"}
 

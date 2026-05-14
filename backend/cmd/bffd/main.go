@@ -17,6 +17,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/catalog"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/config"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/feed"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/recovery"
@@ -69,6 +70,11 @@ func run() int {
 
 	repo := storage.NewRawMessageRepo(pool)
 	disp := feed.NewDispatcher(nil)
+
+	// Register catalog handler (M03/M04 — sport/region/competition/match
+	// upserts + fixture_changes history with no-regression enforcement).
+	catalog.New(pool).Register(disp)
+
 	proc := feed.NewProcessor(repo, pub, disp)
 
 	// Recovery coordinator (live mode only). RECOVERY_INITIAL schedules a
