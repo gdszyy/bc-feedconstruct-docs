@@ -17,6 +17,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/catalog"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/config"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/feed"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/storage"
@@ -67,6 +68,14 @@ func run() int {
 
 	repo := storage.NewRawMessageRepo(pool)
 	disp := feed.NewDispatcher(nil)
+
+	catalogRepo := catalog.NewPgRepo(pool)
+	catalogHandler := catalog.New(catalogRepo)
+	catalogHandler.Logger = catalog.LoggerFunc(func(ev catalog.AntiRegressionEvent) {
+		fmt.Fprintf(os.Stdout, "bffd: status.regress.blocked match_id=%d from=%s to=%s\n", ev.MatchID, ev.From, ev.To)
+	})
+	catalogHandler.Register(disp)
+
 	proc := feed.NewProcessor(repo, pub, disp)
 
 	feedErrCh := make(chan error, 1)
