@@ -22,6 +22,7 @@ import (
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/feed"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/odds"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/recovery"
+	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/settlement"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/storage"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/webapi"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/migrations"
@@ -78,6 +79,10 @@ func run() int {
 	// Register odds handler (M05/M06/M07 — odds_change + bet_stop with
 	// market-level no-regression and market_status_history).
 	odds.New(pool).Register(disp)
+	// Register settlement handler (M08/M09 — bet_settlement + bet_cancel +
+	// rollback_bet_settlement + rollback_cancel; idempotent and
+	// no-regression-aware market transitions).
+	settlement.New(pool).Register(disp)
 
 	proc := feed.NewProcessor(repo, pub, disp)
 
