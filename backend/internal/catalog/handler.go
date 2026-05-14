@@ -12,13 +12,30 @@ import (
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/storage"
 )
 
-// Handler upserts catalog rows from feed deliveries.
-type Handler struct {
-	pool *storage.Pool
+// MatchObserver receives a notification whenever a match.status transitions
+// to a terminal state (ended / closed / cancelled). Implementations must be
+// non-blocking; the catalog Handler runs Observe inside its tx, so any
+// heavyweight follow-up should be queued or done in a goroutine.
+type MatchObserver interface {
+	OnMatchTerminal(ctx context.Context, matchID int64, status string) error
 }
 
-// New returns a Handler bound to pool.
+// Handler upserts catalog rows from feed deliveries.
+type Handler struct {
+	pool     *storage.Pool
+	observer MatchObserver
+}
+
+// New returns a Handler bound to pool with no observer.
 func New(pool *storage.Pool) *Handler { return &Handler{pool: pool} }
+
+// WithObserver returns a copy of h with the given observer attached.
+// Use this from cmd/bffd to wire the subscription manager.
+func (h *Handler) WithObserver(obs MatchObserver) *Handler {
+	cp := *h
+	cp.observer = obs
+	return &cp
+}
 
 // Register binds this handler to every catalog message type understood
 // by the package. After Register the dispatcher routes:
@@ -268,7 +285,31 @@ func (h *Handler) handleMatch(ctx context.Context, env feed.Envelope, rawID [16]
 			return fmt.Errorf("catalog: insert fixture_change %d: %w", id, err)
 		}
 	}
-	return tx.Commit(ctx)
+	if err := tx.Commit(ctx); err != nil {
+		return err
+	}
+	// Fire the observer outside the tx so a slow callback doesn't block
+	// the commit. Only notify on terminal status transitions that we
+	// actually applied (writeStatus, not the requested-but-blocked one).
+	if h.observer != nil && isTerminalStatus(writeStatus) {
+		// Notify on every terminal delivery so observers can be idempotent.
+		// The cost is a single map lookup on the subscriptions side.
+		if err := h.observer.OnMatchTerminal(ctx, id, writeStatus); err != nil {
+			// Don't fail the whole handler if the observer errors; surface a log.
+			fmt.Printf("catalog: observer error for match=%d status=%s: %v\n", id, writeStatus, err)
+		}
+	}
+	return nil
+}
+
+// isTerminalStatus mirrors statusRank ordering: anything at or above
+// "ended" is terminal for match-state purposes.
+func isTerminalStatus(s string) bool {
+	switch s {
+	case "ended", "closed", "cancelled":
+		return true
+	}
+	return false
 }
 
 // ensureSport inserts a placeholder sport row if missing so the FK on

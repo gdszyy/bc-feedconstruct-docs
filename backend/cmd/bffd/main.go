@@ -24,6 +24,7 @@ import (
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/recovery"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/settlement"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/storage"
+	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/subscription"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/webapi"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/migrations"
 )
@@ -73,9 +74,13 @@ func run() int {
 	repo := storage.NewRawMessageRepo(pool)
 	disp := feed.NewDispatcher(nil)
 
-	// Register catalog handler (M03/M04 — sport/region/competition/match
-	// upserts + fixture_changes history with no-regression enforcement).
-	catalog.New(pool).Register(disp)
+	// Subscription manager doubles as a catalog observer so terminal-state
+	// matches auto-release subscriptions.
+	subMgr := subscription.New(pool, subscription.Options{})
+	subMgr.Register(disp)
+
+	// Register catalog handler with the subscription manager as observer.
+	catalog.New(pool).WithObserver(subMgr).Register(disp)
 	// Register odds handler (M05/M06/M07 — odds_change + bet_stop with
 	// market-level no-regression and market_status_history).
 	odds.New(pool).Register(disp)
@@ -83,6 +88,11 @@ func run() int {
 	// rollback_bet_settlement + rollback_cancel; idempotent and
 	// no-regression-aware market transitions).
 	settlement.New(pool).Register(disp)
+
+	// Background cleanup: requested subscriptions stuck > StuckTimeout
+	// become "failed". Replay mode also runs this; the empty queue is a
+	// fast no-op so we don't gate by FEED_MODE.
+	go runSubscriptionCleanup(rootCtx, subMgr)
 
 	proc := feed.NewProcessor(repo, pub, disp)
 
@@ -200,6 +210,28 @@ func startRecovery(ctx context.Context, cfg *config.Config, pool *storage.Pool) 
 			fmt.Fprintf(os.Stdout, "bffd: startup recovery (job %d) submitted\n", id)
 		}
 	}()
+}
+
+// runSubscriptionCleanup ticks the subscription janitor every minute,
+// marking long-stuck requested rows as failed. Stops on ctx done.
+func runSubscriptionCleanup(ctx context.Context, mgr *subscription.Manager) {
+	ticker := time.NewTicker(time.Minute)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			tickCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+			n, err := mgr.CleanupStuck(tickCtx)
+			cancel()
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "bffd: subscription cleanup: %v\n", err)
+			} else if n > 0 {
+				fmt.Fprintf(os.Stdout, "bffd: subscription cleanup marked %d stuck rows failed\n", n)
+			}
+		}
+	}
 }
 
 func runFeed(ctx context.Context, cfg *config.Config, proc *feed.Processor) error {
