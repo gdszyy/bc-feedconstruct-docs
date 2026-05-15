@@ -19,6 +19,8 @@ frontend/.next/
 frontend/.turbo/
 frontend/out/
 frontend/coverage/
+frontend/tsconfig.tsbuildinfo
+frontend/package-lock.json
 node_modules/
 
 # Docker / runtime
