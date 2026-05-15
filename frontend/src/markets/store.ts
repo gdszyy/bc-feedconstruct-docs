@@ -1,5 +1,6 @@
 import type {
   MarketStatus,
+  MarketStatusChangedPayload,
   OddsChangedPayload,
 } from "@/contract/events";
 
@@ -17,6 +18,40 @@ export interface MarketRecord {
   outcomes: OutcomeRecord[];
   version: number;
 }
+
+export interface IllegalTransitionRecord {
+  match_id: string;
+  market_id: string;
+  from: MarketStatus;
+  to: MarketStatus;
+  version: number;
+}
+
+export interface MarketStatusTelemetry {
+  illegalTransition(record: IllegalTransitionRecord): void;
+}
+
+export interface MarketsStoreOptions {
+  telemetry?: MarketStatusTelemetry;
+}
+
+// Strict FSM table — mirrors docs/07_frontend_architecture/04_state_machines.md §3.
+// Self-loops are handled separately (idempotent no-op), so they are NOT in the
+// allowed set here.
+const LEGAL_TRANSITIONS: Record<MarketStatus, ReadonlySet<MarketStatus>> = {
+  active: new Set(["suspended", "deactivated", "cancelled", "handed_over"]),
+  suspended: new Set(["active", "cancelled", "handed_over"]),
+  deactivated: new Set(["settled", "cancelled", "handed_over"]),
+  settled: new Set(["deactivated", "cancelled", "handed_over"]),
+  cancelled: new Set([
+    "active",
+    "suspended",
+    "deactivated",
+    "settled",
+    "handed_over",
+  ]),
+  handed_over: new Set(),
+};
 
 /**
  * Two-level (matchId → marketId) cache for markets and their outcomes.
@@ -44,6 +79,11 @@ export interface MarketRecord {
 export class MarketsStore {
   private readonly markets = new Map<string, Map<string, MarketRecord>>();
   private readonly listeners = new Set<() => void>();
+  private readonly telemetry?: MarketStatusTelemetry;
+
+  constructor(options: MarketsStoreOptions = {}) {
+    this.telemetry = options.telemetry;
+  }
 
   hydrateMatchMarkets(matchId: string, markets: MarketRecord[]): void {
     const bucket = this.bucketFor(matchId);
@@ -97,6 +137,49 @@ export class MarketsStore {
       outcomes: merged,
       version: p.version,
     });
+    this.notify();
+    return true;
+  }
+
+  applyMarketStatusChanged(p: MarketStatusChangedPayload): boolean {
+    const bucket = this.bucketFor(p.match_id);
+    const existing = bucket.get(p.market_id);
+
+    if (existing && p.version <= existing.version) return false;
+
+    if (!existing) {
+      bucket.set(p.market_id, {
+        match_id: p.match_id,
+        market_id: p.market_id,
+        specifiers: {},
+        status: p.status,
+        outcomes: [],
+        version: p.version,
+      });
+      this.notify();
+      return true;
+    }
+
+    const from = existing.status;
+    const to = p.status;
+
+    if (from === to) {
+      bucket.set(p.market_id, { ...existing, version: p.version });
+      return true;
+    }
+
+    if (!LEGAL_TRANSITIONS[from].has(to)) {
+      this.telemetry?.illegalTransition({
+        match_id: p.match_id,
+        market_id: p.market_id,
+        from,
+        to,
+        version: p.version,
+      });
+      return false;
+    }
+
+    bucket.set(p.market_id, { ...existing, status: to, version: p.version });
     this.notify();
     return true;
   }
