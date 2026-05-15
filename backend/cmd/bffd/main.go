@@ -17,6 +17,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/bets"
+	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/bff"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/catalog"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/config"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/feed"
@@ -129,7 +131,9 @@ func run() int {
 		translationClient := translations.NewClient(translations.ClientOptions{BaseURL: base})
 		translationMgr := translations.New(translationClient, translationRepo)
 		translationMgr.Logger = translations.LoggerFunc{
-			OnLanguage:     func(l string, n int) { fmt.Fprintf(os.Stdout, "bffd: translation.refreshed language=%s items=%d\n", l, n) },
+			OnLanguage: func(l string, n int) {
+				fmt.Fprintf(os.Stdout, "bffd: translation.refreshed language=%s items=%d\n", l, n)
+			},
 			OnLanguageSkip: func(l, r string) { fmt.Fprintf(os.Stdout, "bffd: translation.skipped language=%s reason=%s\n", l, r) },
 		}
 		bootTransCtx, bootTransCancel := context.WithTimeout(rootCtx, 30*time.Second)
@@ -162,7 +166,11 @@ func run() int {
 	var ready atomic.Bool
 	ready.Store(true)
 
+	betsRepo := bets.NewPgRepo(pool)
+	betsManager := bets.New(betsRepo, nil, bets.NewRandomIDGenerator())
+
 	mux := http.NewServeMux()
+	bff.RegisterBetsRoutes(mux, betsManager)
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = fmt.Fprintln(w, "ok")
