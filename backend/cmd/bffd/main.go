@@ -23,6 +23,7 @@ import (
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/odds"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/settlement"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/storage"
+	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/subscription"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/migrations"
 )
 
@@ -92,6 +93,35 @@ func run() int {
 		fmt.Fprintf(os.Stdout, "bffd: settlement.skip.unknown_match match_id=%d kind=%s\n", matchID, kind)
 	})
 	settlementHandler.Register(disp)
+
+	subscriptionRepo := subscription.NewPgRepo(pool)
+	subscriptionManager := subscription.New(subscriptionRepo)
+	subscriptionManager.Logger = subscription.LoggerFunc{
+		OnTransition: func(matchID int64, from, to subscription.Status, reason string) {
+			fmt.Fprintf(os.Stdout, "bffd: subscription.transition match_id=%d from=%s to=%s reason=%s\n",
+				matchID, from, to, reason)
+		},
+		OnStuck: func(matchID int64) {
+			fmt.Fprintf(os.Stdout, "bffd: subscription.stuck.expired match_id=%d\n", matchID)
+		},
+	}
+	subscriptionManager.Register(disp)
+	subscriptionManager.AttachToCatalog(catalogHandler)
+
+	cleanupCtx, cleanupCancel := context.WithCancel(rootCtx)
+	defer cleanupCancel()
+	go func() {
+		// Run the stuck-request cleanup at half the configured timeout so
+		// a 5-minute timeout yields a sub-3-minute eviction latency.
+		interval := subscriptionManager.StuckRequestTimeout / 2
+		if interval < time.Minute {
+			interval = time.Minute
+		}
+		if err := subscriptionManager.RunCleanupLoop(cleanupCtx, interval); err != nil &&
+			!errors.Is(err, context.Canceled) {
+			fmt.Fprintf(os.Stderr, "bffd: subscription cleanup loop: %v\n", err)
+		}
+	}()
 
 	proc := feed.NewProcessor(repo, pub, disp)
 

@@ -123,12 +123,29 @@ type LoggerFunc func(ev AntiRegressionEvent)
 
 func (f LoggerFunc) AntiRegressionBlocked(ev AntiRegressionEvent) { f(ev) }
 
+// MatchObserver is notified whenever HandleMatch successfully applies a
+// real status transition (StatusUnknown → X or X → Y where X != Y).
+// Anti-regression hits are *not* reported; the observer only sees
+// effective transitions persisted to the matches row.
+type MatchObserver interface {
+	MatchStatusChanged(ctx context.Context, matchID int64, from, to MatchStatus)
+}
+
+// MatchObserverFunc adapts a function into a MatchObserver.
+type MatchObserverFunc func(ctx context.Context, matchID int64, from, to MatchStatus)
+
+// MatchStatusChanged implements MatchObserver.
+func (f MatchObserverFunc) MatchStatusChanged(ctx context.Context, matchID int64, from, to MatchStatus) {
+	f(ctx, matchID, from, to)
+}
+
 // Handler is the catalog facade. Construct via New, then call Register
 // to bind it to the feed dispatcher.
 type Handler struct {
-	Repo   Repo
-	Logger Logger
-	Now    func() time.Time
+	Repo     Repo
+	Logger   Logger
+	Observer MatchObserver
+	Now      func() time.Time
 
 	regressionCount atomic.Int64
 }
@@ -516,6 +533,10 @@ func (h *Handler) HandleMatch(ctx context.Context, _ feed.MessageType, env feed.
 
 	if err := h.Repo.UpsertMatch(ctx, next); err != nil {
 		return fmt.Errorf("catalog: upsert match: %w", err)
+	}
+
+	if h.Observer != nil && next.Status != prev.Status {
+		h.Observer.MatchStatusChanged(ctx, id, prev.Status, next.Status)
 	}
 
 	if env.StatusChange && hadPrev {
