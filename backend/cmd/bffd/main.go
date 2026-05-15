@@ -24,6 +24,7 @@ import (
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/settlement"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/storage"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/subscription"
+	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/translations"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/migrations"
 )
 
@@ -123,6 +124,36 @@ func run() int {
 		}
 	}()
 
+	if base := translationBaseURL(cfg); base != "" {
+		translationRepo := translations.NewPgRepo(pool)
+		translationClient := translations.NewClient(translations.ClientOptions{BaseURL: base})
+		translationMgr := translations.New(translationClient, translationRepo)
+		translationMgr.Logger = translations.LoggerFunc{
+			OnLanguage:     func(l string, n int) { fmt.Fprintf(os.Stdout, "bffd: translation.refreshed language=%s items=%d\n", l, n) },
+			OnLanguageSkip: func(l, r string) { fmt.Fprintf(os.Stdout, "bffd: translation.skipped language=%s reason=%s\n", l, r) },
+		}
+		bootTransCtx, bootTransCancel := context.WithTimeout(rootCtx, 30*time.Second)
+		if err := translationMgr.RefreshLanguages(bootTransCtx); err != nil {
+			fmt.Fprintf(os.Stderr, "bffd: translation.languages refresh skipped: %v\n", err)
+		}
+		bootTransCancel()
+		for _, lang := range cfg.FCTranslationLanguages {
+			ctx, c := context.WithTimeout(rootCtx, 30*time.Second)
+			if _, err := translationMgr.RefreshLanguage(ctx, lang); err != nil {
+				fmt.Fprintf(os.Stderr, "bffd: translation.refresh skipped language=%s err=%v\n", lang, err)
+			}
+			c()
+		}
+		go func() {
+			if err := translationMgr.RunRefreshLoop(cleanupCtx, time.Hour); err != nil &&
+				!errors.Is(err, context.Canceled) {
+				fmt.Fprintf(os.Stderr, "bffd: translation refresh loop: %v\n", err)
+			}
+		}()
+	} else {
+		fmt.Fprintln(os.Stdout, "bffd: translation API not configured; skipping cache layer")
+	}
+
 	proc := feed.NewProcessor(repo, pub, disp)
 
 	feedErrCh := make(chan error, 1)
@@ -186,6 +217,18 @@ func run() int {
 	defer shutCancel()
 	_ = srv.Shutdown(shutCtx)
 	return 0
+}
+
+// translationBaseURL returns the explicit FC_TRANSLATION_BASE if set,
+// otherwise falls back to FC_API_BASE (which the FeedConstruct
+// documentation reuses as the translation host in single-tenant
+// deployments). Returns "" when neither is configured; the caller then
+// skips the translation cache entirely.
+func translationBaseURL(cfg *config.Config) string {
+	if cfg.FCTranslationBase != "" {
+		return cfg.FCTranslationBase
+	}
+	return cfg.FCAPIBase
 }
 
 func startPublisher(cfg *config.Config) feed.Publisher {
