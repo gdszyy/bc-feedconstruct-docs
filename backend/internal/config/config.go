@@ -37,6 +37,18 @@ type Config struct {
 	FCAPIUser string
 	FCAPIPass string
 
+	// FeedConstruct Translation Web API. Optional: when empty the BFF
+	// skips the translation cache layer and serves raw IDs to the
+	// frontend (which logs a warning per M12 "displays skeleton, not
+	// ID" verification). Defaults to the same host as FCAPIBase.
+	FCTranslationBase string
+
+	// FCTranslationLanguages is the comma-separated language list the
+	// translation manager refreshes on boot and on schedule (e.g.
+	// "en,zh,ru"). Empty means no proactive refresh; cache misses are
+	// still served on demand via ById.
+	FCTranslationLanguages []string
+
 	// FeedConstruct RMQ
 	FCRMQHost   string
 	FCRMQUser   string
@@ -69,9 +81,11 @@ func Load() (*Config, error) {
 		DatabaseURL:      os.Getenv("DATABASE_URL"),
 		RabbitMQURL:      os.Getenv("RABBITMQ_URL"),
 		WSAllowedOrigins: splitCSV(os.Getenv("WS_ALLOWED_ORIGINS")),
-		FCAPIBase:        os.Getenv("FC_API_BASE"),
-		FCAPIUser:        os.Getenv("FC_API_USER"),
-		FCAPIPass:        os.Getenv("FC_API_PASS"),
+		FCAPIBase:              os.Getenv("FC_API_BASE"),
+		FCAPIUser:              os.Getenv("FC_API_USER"),
+		FCAPIPass:              os.Getenv("FC_API_PASS"),
+		FCTranslationBase:      os.Getenv("FC_TRANSLATION_BASE"),
+		FCTranslationLanguages: splitCSV(os.Getenv("FC_TRANSLATION_LANGUAGES")),
 		FCRMQHost:        os.Getenv("FC_RMQ_HOST"),
 		FCRMQUser:        os.Getenv("FC_RMQ_USER"),
 		FCRMQPass:        os.Getenv("FC_RMQ_PASS"),

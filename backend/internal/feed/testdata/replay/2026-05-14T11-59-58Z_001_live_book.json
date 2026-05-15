@@ -1,0 +1,10 @@
+{
+  "objectType": 4,
+  "objectId": 42,
+  "matchId": 42,
+  "sportId": 1,
+  "isLive": true,
+  "isSubscribed": true,
+  "book": true,
+  "timestamp": "2026-05-14T11:59:58Z"
+}

@@ -1,0 +1,9 @@
+{
+  "objectType": 4,
+  "matchId": 42,
+  "sportId": 1,
+  "status": "ended",
+  "isLive": false,
+  "statusChange": true,
+  "timestamp": "2026-05-14T12:00:03Z"
+}

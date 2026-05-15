@@ -17,12 +17,16 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/bets"
+	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/bff"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/catalog"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/config"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/feed"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/odds"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/settlement"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/storage"
+	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/subscription"
+	"github.com/gdszyy/bc-feedconstruct-docs/backend/internal/translations"
 	"github.com/gdszyy/bc-feedconstruct-docs/backend/migrations"
 )
 
@@ -93,6 +97,67 @@ func run() int {
 	})
 	settlementHandler.Register(disp)
 
+	subscriptionRepo := subscription.NewPgRepo(pool)
+	subscriptionManager := subscription.New(subscriptionRepo)
+	subscriptionManager.Logger = subscription.LoggerFunc{
+		OnTransition: func(matchID int64, from, to subscription.Status, reason string) {
+			fmt.Fprintf(os.Stdout, "bffd: subscription.transition match_id=%d from=%s to=%s reason=%s\n",
+				matchID, from, to, reason)
+		},
+		OnStuck: func(matchID int64) {
+			fmt.Fprintf(os.Stdout, "bffd: subscription.stuck.expired match_id=%d\n", matchID)
+		},
+	}
+	subscriptionManager.Register(disp)
+	subscriptionManager.AttachToCatalog(catalogHandler)
+
+	cleanupCtx, cleanupCancel := context.WithCancel(rootCtx)
+	defer cleanupCancel()
+	go func() {
+		// Run the stuck-request cleanup at half the configured timeout so
+		// a 5-minute timeout yields a sub-3-minute eviction latency.
+		interval := subscriptionManager.StuckRequestTimeout / 2
+		if interval < time.Minute {
+			interval = time.Minute
+		}
+		if err := subscriptionManager.RunCleanupLoop(cleanupCtx, interval); err != nil &&
+			!errors.Is(err, context.Canceled) {
+			fmt.Fprintf(os.Stderr, "bffd: subscription cleanup loop: %v\n", err)
+		}
+	}()
+
+	if base := translationBaseURL(cfg); base != "" {
+		translationRepo := translations.NewPgRepo(pool)
+		translationClient := translations.NewClient(translations.ClientOptions{BaseURL: base})
+		translationMgr := translations.New(translationClient, translationRepo)
+		translationMgr.Logger = translations.LoggerFunc{
+			OnLanguage: func(l string, n int) {
+				fmt.Fprintf(os.Stdout, "bffd: translation.refreshed language=%s items=%d\n", l, n)
+			},
+			OnLanguageSkip: func(l, r string) { fmt.Fprintf(os.Stdout, "bffd: translation.skipped language=%s reason=%s\n", l, r) },
+		}
+		bootTransCtx, bootTransCancel := context.WithTimeout(rootCtx, 30*time.Second)
+		if err := translationMgr.RefreshLanguages(bootTransCtx); err != nil {
+			fmt.Fprintf(os.Stderr, "bffd: translation.languages refresh skipped: %v\n", err)
+		}
+		bootTransCancel()
+		for _, lang := range cfg.FCTranslationLanguages {
+			ctx, c := context.WithTimeout(rootCtx, 30*time.Second)
+			if _, err := translationMgr.RefreshLanguage(ctx, lang); err != nil {
+				fmt.Fprintf(os.Stderr, "bffd: translation.refresh skipped language=%s err=%v\n", lang, err)
+			}
+			c()
+		}
+		go func() {
+			if err := translationMgr.RunRefreshLoop(cleanupCtx, time.Hour); err != nil &&
+				!errors.Is(err, context.Canceled) {
+				fmt.Fprintf(os.Stderr, "bffd: translation refresh loop: %v\n", err)
+			}
+		}()
+	} else {
+		fmt.Fprintln(os.Stdout, "bffd: translation API not configured; skipping cache layer")
+	}
+
 	proc := feed.NewProcessor(repo, pub, disp)
 
 	feedErrCh := make(chan error, 1)
@@ -101,7 +166,11 @@ func run() int {
 	var ready atomic.Bool
 	ready.Store(true)
 
+	betsRepo := bets.NewPgRepo(pool)
+	betsManager := bets.New(betsRepo, nil, bets.NewRandomIDGenerator())
+
 	mux := http.NewServeMux()
+	bff.RegisterBetsRoutes(mux, betsManager)
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, _ = fmt.Fprintln(w, "ok")
@@ -156,6 +225,18 @@ func run() int {
 	defer shutCancel()
 	_ = srv.Shutdown(shutCtx)
 	return 0
+}
+
+// translationBaseURL returns the explicit FC_TRANSLATION_BASE if set,
+// otherwise falls back to FC_API_BASE (which the FeedConstruct
+// documentation reuses as the translation host in single-tenant
+// deployments). Returns "" when neither is configured; the caller then
+// skips the translation cache entirely.
+func translationBaseURL(cfg *config.Config) string {
+	if cfg.FCTranslationBase != "" {
+		return cfg.FCTranslationBase
+	}
+	return cfg.FCAPIBase
 }
 
 func startPublisher(cfg *config.Config) feed.Publisher {
