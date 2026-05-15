@@ -122,6 +122,10 @@ export class Transport {
     this.sendFrame({ op: "unsubscribe", scope });
   }
 
+  replayFrom(cursor: string, sessionId: string): void {
+    this.sendFrame({ op: "replay_from", cursor, session_id: sessionId });
+  }
+
   onState(handler: (s: ConnectionState) => void): () => void {
     this.stateListeners.add(handler);
     return () => this.stateListeners.delete(handler);

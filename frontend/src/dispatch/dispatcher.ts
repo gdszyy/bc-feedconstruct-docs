@@ -83,6 +83,27 @@ export class Dispatcher {
     }
   }
 
+  /**
+   * Seed the VersionGuard caches without invoking handlers. Used by M10
+   * after a snapshot is applied so that subsequent stale increments are
+   * dropped by the same monotonicity check that handles real-time events.
+   */
+  seedVersion(env: Envelope): void {
+    const key = versionGuardKey(env);
+    const payload = env.payload as { version?: number } | null | undefined;
+    if (payload && typeof payload.version === "number") {
+      const prev = this.versions.get(key);
+      if (prev === undefined || payload.version > prev) {
+        this.versions.set(key, payload.version);
+      }
+      return;
+    }
+    const prevTs = this.timestamps.get(key);
+    if (prevTs === undefined || env.occurred_at > prevTs) {
+      this.timestamps.set(key, env.occurred_at);
+    }
+  }
+
   private versionGuardPasses(env: Envelope): boolean {
     const key = versionGuardKey(env);
     const payload = env.payload as { version?: number } | null | undefined;
