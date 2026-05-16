@@ -12,6 +12,11 @@ import { HealthStore } from "@/health/store";
 import { MarketsStore } from "@/markets/store";
 import { MatchStore } from "@/match/store";
 import { MyBetsStore } from "@/myBets/store";
+import {
+  Transport,
+  type WebSocketFactory,
+  type WebSocketLike,
+} from "@/realtime/transport";
 import { RollbackHistoryStore } from "@/rollback/store";
 import { CancelStore, SettlementStore } from "@/settlement/store";
 import { FavoritesStore } from "@/subscription/favorites";
@@ -54,6 +59,7 @@ export interface Stores {
   telemetry: TelemetryStore;
   dispatcher: Dispatcher;
   restClient: RestClient;
+  transport: Transport;
 }
 
 export interface CreateDefaultStoresOptions {
@@ -69,6 +75,18 @@ export interface CreateDefaultStoresOptions {
    * client with auth + telemetry already wired.
    */
   restClient?: RestClient;
+  /**
+   * WS Transport. Defaults to one pointed at `NEXT_PUBLIC_BFF_WS`
+   * (or `ws://localhost:8080/ws`). Tests should inject a Transport built
+   * with a fake `webSocketFactory`.
+   */
+  transport?: Transport;
+  /**
+   * Override the WebSocket factory used by the default Transport. Ignored
+   * when `transport` is provided. Useful when production wants to instrument
+   * the WS but is fine with the default URL + reconnect policy.
+   */
+  webSocketFactory?: WebSocketFactory;
 }
 
 export function createDefaultStores(
@@ -93,6 +111,9 @@ export function createDefaultStores(
     }),
     dispatcher: new Dispatcher(),
     restClient: opts.restClient ?? createDefaultRestClient(),
+    transport:
+      opts.transport ??
+      createDefaultTransport({ webSocketFactory: opts.webSocketFactory }),
   };
 }
 
@@ -103,6 +124,33 @@ function createDefaultRestClient(): RestClient {
   return new RestClient({
     baseUrl,
     fetch: (input, init) => fetch(input, init),
+  });
+}
+
+function createDefaultTransport(opts: {
+  webSocketFactory?: WebSocketFactory;
+}): Transport {
+  const url =
+    (typeof process !== "undefined" && process.env?.NEXT_PUBLIC_BFF_WS) ||
+    "ws://localhost:8080/ws";
+  // In environments without a global WebSocket (Node / jsdom default), use an
+  // inert factory so the Transport instance exists but never actually fires
+  // open/message/close. Production hits the real browser global.
+  const factory =
+    opts.webSocketFactory ??
+    (typeof WebSocket !== "undefined" ? undefined : createInertWsFactory());
+  return new Transport({ url, webSocketFactory: factory });
+}
+
+function createInertWsFactory(): WebSocketFactory {
+  return (_url: string): WebSocketLike => ({
+    readyState: 0,
+    send() {},
+    close() {},
+    onopen: null,
+    onmessage: null,
+    onclose: null,
+    onerror: null,
   });
 }
 
@@ -129,9 +177,23 @@ export function StoresProvider({
   );
 
   useEffect(() => {
-    const unsub = wire(stores.dispatcher, stores);
+    const unsubWire = wire(stores.dispatcher, stores);
+    const unsubMsg = stores.transport.onMessage((env) => {
+      stores.dispatcher.dispatch(env);
+    });
+    // Idempotent — Transport.connect() short-circuits if already
+    // Connecting/Open. Skipped for Closed (stopped) bundles so we never
+    // accidentally restart a deliberately-closed Transport.
+    if (stores.transport.getState() === "Disconnected") {
+      stores.transport.connect();
+    }
     return () => {
-      unsub();
+      unsubMsg();
+      unsubWire();
+      // Intentional: we do NOT call stores.transport.close(). The Transport
+      // is owned by the Stores bundle and is meant to outlive React mount /
+      // unmount cycles (React StrictMode runs effects twice in dev, and
+      // Transport.close() sets stopped=true permanently).
     };
   }, [stores, wire]);
 
