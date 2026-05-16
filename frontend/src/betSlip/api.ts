@@ -1,4 +1,4 @@
-import type { RestClient, ApiResult } from "@/api/client";
+import type { ApiResult, RestClient } from "@/api/client";
 import type {
   PlaceBetRequest,
   PlaceBetResponse,
@@ -6,33 +6,28 @@ import type {
   ValidateBetSlipResponse,
 } from "@/contract/rest";
 
-// ---------------------------------------------------------------------------
-// M13 — BetSlipApi
-// Thin adapter over RestClient for /api/v1/bet-slip/{validate,place}.
-// ---------------------------------------------------------------------------
+// M13 — Thin functions over RestClient for /api/v1/bet-slip/{validate,place}.
 
-export class BetSlipApi {
-  constructor(private readonly client: RestClient) {}
+export function validateBetSlip(
+  client: RestClient,
+  req: ValidateBetSlipRequest,
+  correlationId?: string,
+): Promise<ApiResult<ValidateBetSlipResponse>> {
+  return client.post<ValidateBetSlipResponse>("/api/v1/bet-slip/validate", {
+    body: req,
+    correlationId,
+  });
+}
 
-  validate(
-    req: ValidateBetSlipRequest,
-    correlationId?: string,
-  ): Promise<ApiResult<ValidateBetSlipResponse>> {
-    return this.client.post<ValidateBetSlipResponse>(
-      "/api/v1/bet-slip/validate",
-      { body: req, correlationId },
-    );
-  }
-
-  place(
-    req: PlaceBetRequest,
-    idempotencyKey: string,
-    correlationId?: string,
-  ): Promise<ApiResult<PlaceBetResponse>> {
-    return this.client.post<PlaceBetResponse>("/api/v1/bet-slip/place", {
-      body: req,
-      idempotencyKey,
-      correlationId,
-    });
-  }
+export function placeBet(
+  client: RestClient,
+  req: PlaceBetRequest,
+  idempotencyKey: string,
+  correlationId?: string,
+): Promise<ApiResult<PlaceBetResponse>> {
+  return client.post<PlaceBetResponse>("/api/v1/bet-slip/place", {
+    body: req,
+    idempotencyKey,
+    correlationId,
+  });
 }

@@ -1,6 +1,4 @@
 // frontend/src/health/api.test.ts
-//
-// HealthApi — adapter over RestClient for /system/health.
 
 import { describe, expect, it } from "vitest";
 
@@ -8,9 +6,9 @@ import type { ApiResult } from "@/api/client";
 import { StubRestClient } from "@/api/testing";
 import type { GetSystemHealthResponse } from "@/contract/rest";
 
-import { HealthApi } from "./api";
+import { fetchSystemHealth } from "./api";
 
-describe("HealthApi.fetchSystemHealth: routes to /system/health", () => {
+describe("fetchSystemHealth: routes to /system/health", () => {
   it("when fetchSystemHealth is invoked then the GET targets /system/health", async () => {
     const stub = new StubRestClient({
       defaultResponse: {
@@ -23,8 +21,7 @@ describe("HealthApi.fetchSystemHealth: routes to /system/health", () => {
         http_status: 200,
       } as ApiResult<GetSystemHealthResponse>,
     });
-    const api = new HealthApi(stub.asClient());
-    await api.fetchSystemHealth("corr-h");
+    await fetchSystemHealth(stub.asClient(), "corr-h");
     expect(stub.calls).toEqual([
       {
         method: "GET",
@@ -35,7 +32,7 @@ describe("HealthApi.fetchSystemHealth: routes to /system/health", () => {
   });
 });
 
-describe("HealthApi.fetchSystemHealth: 200 returns producer states", () => {
+describe("fetchSystemHealth: 200 returns producer states", () => {
   it("when the server responds 200 then the parsed body is returned", async () => {
     const expected: GetSystemHealthResponse = {
       producers: [
@@ -56,8 +53,7 @@ describe("HealthApi.fetchSystemHealth: 200 returns producer states", () => {
         http_status: 200,
       } as ApiResult<GetSystemHealthResponse>,
     });
-    const api = new HealthApi(stub.asClient());
-    const result = await api.fetchSystemHealth();
+    const result = await fetchSystemHealth(stub.asClient());
     expect(result.status).toBe("ok");
     if (result.status === "ok") expect(result.body).toEqual(expected);
   });

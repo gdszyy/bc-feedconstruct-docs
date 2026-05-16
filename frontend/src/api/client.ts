@@ -83,8 +83,16 @@ export interface RestClientOptions {
   telemetry?: RestClientTelemetry;
 }
 
+export type QueryValue =
+  | string
+  | number
+  | boolean
+  | undefined
+  | null
+  | ReadonlyArray<string | number | boolean>;
+
 export interface RequestOptions {
-  query?: Record<string, string | number | boolean | undefined | null>;
+  query?: Record<string, QueryValue>;
   body?: unknown;
   idempotencyKey?: string;
   ifNoneMatch?: string;
@@ -277,7 +285,15 @@ export class RestClient {
     const params: string[] = [];
     for (const [k, v] of Object.entries(query)) {
       if (v === undefined || v === null) continue;
-      params.push(`${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`);
+      const key = encodeURIComponent(k);
+      if (Array.isArray(v)) {
+        for (const item of v) {
+          if (item === undefined || item === null) continue;
+          params.push(`${key}=${encodeURIComponent(String(item))}`);
+        }
+      } else {
+        params.push(`${key}=${encodeURIComponent(String(v))}`);
+      }
     }
     if (params.length > 0) url += `?${params.join("&")}`;
     return url;

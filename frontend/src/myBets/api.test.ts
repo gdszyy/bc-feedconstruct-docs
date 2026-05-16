@@ -1,6 +1,4 @@
 // frontend/src/myBets/api.test.ts
-//
-// MyBetsApi — adapter over RestClient for /my-bets.
 
 import { describe, expect, it } from "vitest";
 
@@ -8,10 +6,10 @@ import type { ApiResult } from "@/api/client";
 import { StubRestClient } from "@/api/testing";
 import type { GetMyBetsResponse, MyBet } from "@/contract/rest";
 
-import { MyBetsApi } from "./api";
+import { fetchMyBetById, fetchMyBets } from "./api";
 
-describe("MyBetsApi.fetchMyBets: encodes status filter as repeated params", () => {
-  it("when multi-valued status is provided then status appears once per value", async () => {
+describe("fetchMyBets: status filter forwarded as array query", () => {
+  it("when multi-valued status is provided then it is forwarded as an array to RestClient", async () => {
     const stub = new StubRestClient({
       defaultResponse: {
         status: "ok",
@@ -20,14 +18,19 @@ describe("MyBetsApi.fetchMyBets: encodes status filter as repeated params", () =
         http_status: 200,
       } as ApiResult<GetMyBetsResponse>,
     });
-    const api = new MyBetsApi(stub.asClient());
-    await api.fetchMyBets({ status: ["Pending", "Accepted"], limit: 10 });
-    expect(stub.calls[0]?.path).toBe(
-      "/api/v1/my-bets?limit=10&status=Pending&status=Accepted",
-    );
+    await fetchMyBets(stub.asClient(), {
+      status: ["Pending", "Accepted"],
+      limit: 10,
+    });
+    expect(stub.calls[0]?.path).toBe("/api/v1/my-bets");
+    expect(stub.calls[0]?.options.query).toEqual({
+      user_id: undefined,
+      limit: 10,
+      status: ["Pending", "Accepted"],
+    });
   });
 
-  it("when no query is provided then the path is bare /my-bets", async () => {
+  it("when no query is provided then the path stays /my-bets and undefined keys are skipped by RestClient", async () => {
     const stub = new StubRestClient({
       defaultResponse: {
         status: "ok",
@@ -36,13 +39,12 @@ describe("MyBetsApi.fetchMyBets: encodes status filter as repeated params", () =
         http_status: 200,
       } as ApiResult<GetMyBetsResponse>,
     });
-    const api = new MyBetsApi(stub.asClient());
-    await api.fetchMyBets();
+    await fetchMyBets(stub.asClient());
     expect(stub.calls[0]?.path).toBe("/api/v1/my-bets");
   });
 });
 
-describe("MyBetsApi.fetchMyBetById: routes to /my-bets/{id}", () => {
+describe("fetchMyBetById: routes to /my-bets/{id}", () => {
   it("when fetchMyBetById is invoked then the path interpolates the bet id", async () => {
     const stub = new StubRestClient({
       defaultResponse: {
@@ -62,13 +64,12 @@ describe("MyBetsApi.fetchMyBetById: routes to /my-bets/{id}", () => {
         http_status: 200,
       } as ApiResult<MyBet>,
     });
-    const api = new MyBetsApi(stub.asClient());
-    await api.fetchMyBetById("bet 42/x");
+    await fetchMyBetById(stub.asClient(), "bet 42/x");
     expect(stub.calls[0]?.path).toBe("/api/v1/my-bets/bet%2042%2Fx");
   });
 });
 
-describe("MyBetsApi.fetchMyBetById: 404 surfaced as error", () => {
+describe("fetchMyBetById: 404 surfaced as error", () => {
   it("when the bet is unknown then the adapter returns status=error", async () => {
     const stub = new StubRestClient({
       defaultResponse: {
@@ -83,8 +84,7 @@ describe("MyBetsApi.fetchMyBetById: 404 surfaced as error", () => {
         correlation_id: "c",
       } as ApiResult<MyBet>,
     });
-    const api = new MyBetsApi(stub.asClient());
-    const result = await api.fetchMyBetById("unknown");
+    const result = await fetchMyBetById(stub.asClient(), "unknown");
     expect(result.status).toBe("error");
   });
 });

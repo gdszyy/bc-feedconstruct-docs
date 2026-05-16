@@ -1,6 +1,6 @@
 // frontend/src/betSlip/api.test.ts
 //
-// BetSlipApi — adapter over RestClient for /bet-slip/validate and /place.
+// M13 BetSlip adapter — validateBetSlip / placeBet plain functions.
 
 import { describe, expect, it } from "vitest";
 
@@ -12,10 +12,10 @@ import type {
   ValidateBetSlipResponse,
 } from "@/contract/rest";
 
-import { BetSlipApi } from "./api";
+import { placeBet, validateBetSlip } from "./api";
 
-describe("BetSlipApi.validate: posts request to /bet-slip/validate", () => {
-  it("when validate is invoked then the client posts the slip body", async () => {
+describe("validateBetSlip: posts request to /bet-slip/validate", () => {
+  it("when validateBetSlip is invoked then the client posts the slip body", async () => {
     const stub = new StubRestClient({
       defaultResponse: {
         status: "ok",
@@ -24,7 +24,6 @@ describe("BetSlipApi.validate: posts request to /bet-slip/validate", () => {
         http_status: 200,
       } as ApiResult<ValidateBetSlipResponse>,
     });
-    const api = new BetSlipApi(stub.asClient());
     const req: ValidateBetSlipRequest = {
       selections: [
         {
@@ -39,7 +38,7 @@ describe("BetSlipApi.validate: posts request to /bet-slip/validate", () => {
       currency: "USD",
       bet_type: "single",
     };
-    const result = await api.validate(req, "corr-explicit");
+    const result = await validateBetSlip(stub.asClient(), req, "corr-explicit");
     expect(stub.calls).toEqual([
       {
         method: "POST",
@@ -51,8 +50,8 @@ describe("BetSlipApi.validate: posts request to /bet-slip/validate", () => {
   });
 });
 
-describe("BetSlipApi.place: posts with idempotency key", () => {
-  it("when place is invoked then the request carries the idempotency key", async () => {
+describe("placeBet: posts with idempotency key", () => {
+  it("when placeBet is invoked then the request carries the idempotency key", async () => {
     const stub = new StubRestClient({
       defaultResponse: {
         status: "ok",
@@ -65,14 +64,9 @@ describe("BetSlipApi.place: posts with idempotency key", () => {
         http_status: 200,
       } as ApiResult<PlaceBetResponse>,
     });
-    const api = new BetSlipApi(stub.asClient());
-    await api.place(
-      {
-        selections: [],
-        stake: 10,
-        currency: "USD",
-        bet_type: "single",
-      },
+    await placeBet(
+      stub.asClient(),
+      { selections: [], stake: 10, currency: "USD", bet_type: "single" },
       "idem-1",
     );
     expect(stub.calls[0]?.method).toBe("POST");
@@ -81,7 +75,7 @@ describe("BetSlipApi.place: posts with idempotency key", () => {
   });
 });
 
-describe("BetSlipApi.place: 4xx error surfaced as result.error", () => {
+describe("placeBet: 4xx error surfaced as result.error", () => {
   it("when the server rejects then the adapter returns status=error without throwing", async () => {
     const stub = new StubRestClient({
       defaultResponse: {
@@ -96,8 +90,8 @@ describe("BetSlipApi.place: 4xx error surfaced as result.error", () => {
         correlation_id: "c-1",
       } as ApiResult<PlaceBetResponse>,
     });
-    const api = new BetSlipApi(stub.asClient());
-    const result = await api.place(
+    const result = await placeBet(
+      stub.asClient(),
       { selections: [], stake: 1, currency: "USD", bet_type: "single" },
       "idem-1",
     );

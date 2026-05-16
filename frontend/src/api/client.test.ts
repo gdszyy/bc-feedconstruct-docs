@@ -99,6 +99,17 @@ describe("RestClient request: path joined with base URL", () => {
       "https://api.example.com/api/v1/matches?filter=live&limit=10",
     );
   });
+
+  it("when an array query value is provided then the key is repeated once per item", async () => {
+    const { fetch, calls } = makeFetch(() => jsonResp(200, {}));
+    const c = client({ fetch });
+    await c.get("/api/v1/my-bets", {
+      query: { status: ["Pending", "Accepted"], limit: 5 },
+    });
+    expect(calls[0]?.url).toBe(
+      "https://api.example.com/api/v1/my-bets?status=Pending&status=Accepted&limit=5",
+    );
+  });
 });
 
 // =================== Auth ===================
