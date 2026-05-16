@@ -27,6 +27,11 @@ import type {
 } from "@/contract/events";
 import type { GetMatchSnapshotResponse } from "@/contract/rest";
 import {
+  MarketsStore,
+  type IllegalTransitionRecord,
+  type MarketStatusTelemetry,
+} from "@/markets/store";
+import {
   Transport,
   type WebSocketLike,
 } from "@/realtime/transport";
@@ -306,5 +311,140 @@ describe("given subscribed match-detail page with rendered market statuses", () 
     const updatedRow = await findByTestId("market-row-m1");
     expect(updatedRow.textContent).toMatch(/suspended/);
     expect(updatedRow.textContent).not.toMatch(/active/);
+  });
+});
+
+// Given a match-detail page wired to a MarketsStore that was constructed
+//   with a MarketStatusTelemetry spy, and market m1 is driven through the
+//   WebSocket dispatch path into status=settled, version=3 via the legal
+//   hops active(v1) → deactivated(v2) → settled(v3)
+// When the Transport emits a market.status_changed envelope for m1 with
+//   { status: "active", version: 4 } — FSM-illegal per
+//   docs/07_frontend_architecture/04_state_machines.md §3 (settled may go
+//   only to deactivated / cancelled / handed_over)
+// Then the rendered row for m1 still shows status="settled" at v3 (UI not
+//   polluted by the illegal target) AND the telemetry spy was invoked
+//   exactly once with the rejection record
+//   { match_id: "42", market_id: "m1", from: "settled", to: "active",
+//     version: 4 }
+//
+// Real test body lands after user confirms (per CLAUDE.md 强制 BDD 流程).
+describe("given page with m1 driven to settled and a MarketStatusTelemetry spy installed", () => {
+  it("when ws market.status_changed targets active (FSM-illegal) then UI stays at settled v3 and telemetry records the rejection", async () => {
+    FakeWebSocket.reset();
+
+    // Build the bundle, then swap MarketsStore for one wired to a spy.
+    // wireDispatcher runs on StoresProvider mount and reads stores.markets
+    // at that point, so as long as we swap BEFORE rendering the swap is
+    // picked up by every downstream consumer (dispatch + page selectors).
+    const records: IllegalTransitionRecord[] = [];
+    const telemetrySpy: MarketStatusTelemetry = {
+      illegalTransition: vi.fn((r: IllegalTransitionRecord) => {
+        records.push(r);
+      }),
+    };
+    const bundle = makeBundle(makeSnapshot());
+    bundle.markets = new MarketsStore({ telemetry: telemetrySpy });
+
+    const { findByTestId } = render(
+      <StoresProvider value={bundle}>
+        <MatchDetailPage params={{ id: "42" }} />
+      </StoresProvider>,
+    );
+
+    // Wait for hydrate (m1 lands as active v1).
+    await waitFor(() => {
+      const m1 = bundle.markets
+        .listMarkets("42")
+        .find((m) => m.market_id === "m1");
+      expect(m1?.status).toBe("active");
+      expect(m1?.version).toBe(1);
+    });
+
+    const ws = FakeWebSocket.instances[0]!;
+    act(() => {
+      ws.fireOpen();
+    });
+
+    function statusEnv(
+      status: MarketStatusChangedPayload["status"],
+      version: number,
+      evtSuffix: string,
+    ): Envelope<MarketStatusChangedPayload> {
+      return {
+        type: "market.status_changed",
+        schema_version: "1",
+        event_id: `evt-illegal-${evtSuffix}`,
+        correlation_id: `corr-illegal-${evtSuffix}`,
+        product_id: "live",
+        occurred_at: "2026-05-16T00:04:00Z",
+        received_at: "2026-05-16T00:04:00Z",
+        entity: { match_id: "42", market_id: "m1" },
+        payload: {
+          match_id: "42",
+          market_id: "m1",
+          status,
+          version,
+        },
+      };
+    }
+
+    // Legal hop 1: active(v1) → deactivated(v2).
+    act(() => {
+      ws.fireMessage(statusEnv("deactivated", 2, "hop1"));
+    });
+    await waitFor(() => {
+      const m1 = bundle.markets
+        .listMarkets("42")
+        .find((m) => m.market_id === "m1");
+      expect(m1?.status).toBe("deactivated");
+      expect(m1?.version).toBe(2);
+    });
+
+    // Legal hop 2: deactivated(v2) → settled(v3).
+    act(() => {
+      ws.fireMessage(statusEnv("settled", 3, "hop2"));
+    });
+    await waitFor(() => {
+      const m1 = bundle.markets
+        .listMarkets("42")
+        .find((m) => m.market_id === "m1");
+      expect(m1?.status).toBe("settled");
+      expect(m1?.version).toBe(3);
+    });
+    expect(records).toHaveLength(0); // no telemetry on the legal hops
+
+    // Illegal: settled → active is not in the legal transition set per
+    // docs/07_frontend_architecture/04_state_machines.md §3.
+    act(() => {
+      ws.fireMessage(statusEnv("active", 4, "illegal"));
+    });
+
+    // Telemetry fires synchronously inside applyMarketStatusChanged, but
+    // the dispatch + React state propagation share the same task, so we
+    // waitFor to give act() time to flush before asserting.
+    await waitFor(() => {
+      expect(telemetrySpy.illegalTransition).toHaveBeenCalledTimes(1);
+    });
+    expect(records).toHaveLength(1);
+    expect(records[0]).toEqual({
+      match_id: "42",
+      market_id: "m1",
+      from: "settled",
+      to: "active",
+      version: 4,
+    });
+
+    // UI not polluted — row still says settled at v3.
+    const m1 = bundle.markets
+      .listMarkets("42")
+      .find((m) => m.market_id === "m1");
+    expect(m1?.status).toBe("settled");
+    expect(m1?.version).toBe(3);
+
+    const row = await findByTestId("market-row-m1");
+    expect(row.textContent).toMatch(/settled/);
+    expect(row.textContent).toMatch(/v3/);
+    expect(row.textContent).not.toMatch(/active/);
   });
 });
