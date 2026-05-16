@@ -20,7 +20,11 @@ import { act, render, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { StubRestClient } from "@/api/testing";
-import type { Envelope, OddsChangedPayload } from "@/contract/events";
+import type {
+  Envelope,
+  MarketStatusChangedPayload,
+  OddsChangedPayload,
+} from "@/contract/events";
 import type { GetMatchSnapshotResponse } from "@/contract/rest";
 import {
   Transport,
@@ -243,5 +247,64 @@ describe("given a mounted match-detail page with an active subscription", () => 
 
     expect(unsubscribeSpy).toHaveBeenCalledWith({ match_ids: ["42"] });
     expect(unsubscribeSpy).toHaveBeenCalledTimes(1);
+  });
+});
+
+// Given a subscribed match-detail page with a markets list showing market
+//   m1 as "active"
+// When the Transport emits a market.status_changed envelope for m1
+//   transitioning active→suspended at a higher version
+// Then the rendered markets list row for m1 shows status="suspended" without
+//   a snapshot re-fetch
+describe("given subscribed match-detail page with rendered market statuses", () => {
+  it("when ws market.status_changed flips m1 active→suspended then the list row reflects suspended", async () => {
+    FakeWebSocket.reset();
+    const bundle = makeBundle(makeSnapshot());
+    const { findByTestId } = render(
+      <StoresProvider value={bundle}>
+        <MatchDetailPage params={{ id: "42" }} />
+      </StoresProvider>,
+    );
+
+    // Initial render — m1 status is "active" from the snapshot.
+    const initialRow = await findByTestId("market-row-m1");
+    expect(initialRow.textContent).toMatch(/active/);
+
+    const ws = FakeWebSocket.instances[0]!;
+    act(() => {
+      ws.fireOpen();
+    });
+
+    const statusEnv: Envelope<MarketStatusChangedPayload> = {
+      type: "market.status_changed",
+      schema_version: "1",
+      event_id: "evt-mstatus-1",
+      correlation_id: "corr-mstatus-1",
+      product_id: "live",
+      occurred_at: "2026-05-16T00:03:00Z",
+      received_at: "2026-05-16T00:03:00Z",
+      entity: { match_id: "42", market_id: "m1" },
+      payload: {
+        match_id: "42",
+        market_id: "m1",
+        status: "suspended",
+        version: 2,
+      },
+    };
+    act(() => {
+      ws.fireMessage(statusEnv);
+    });
+
+    await waitFor(() => {
+      const row = bundle.markets
+        .listMarkets("42")
+        .find((m) => m.market_id === "m1");
+      expect(row?.status).toBe("suspended");
+    });
+
+    // And the DOM row reflects it.
+    const updatedRow = await findByTestId("market-row-m1");
+    expect(updatedRow.textContent).toMatch(/suspended/);
+    expect(updatedRow.textContent).not.toMatch(/active/);
   });
 });

@@ -18,16 +18,20 @@ export default function MatchDetailPage({ params }: MatchDetailPageProps) {
 
   // Primitive selectors — listMarkets() returns a fresh array each call,
   // which would break useSyncExternalStore's referential-equality cache if
-  // we selected the array itself.
+  // we selected the array itself. The render hash subscribes to every
+  // (market_id, version, status) so any status_changed or odds_changed
+  // event that bumps a version triggers a re-render; the actual array is
+  // read fresh from MarketsStore at render time below.
   const marketsCount = useStore(stores.markets, (m) =>
     m.listMarkets(id).length,
   );
-  const marketsVersionHash = useStore(stores.markets, (m) =>
+  useStore(stores.markets, (m) =>
     m
       .listMarkets(id)
-      .map((mk) => `${mk.market_id}:${mk.version}`)
+      .map((mk) => `${mk.market_id}:${mk.version}:${mk.status}`)
       .join("|"),
   );
+  const marketRows = stores.markets.listMarkets(id);
   const homeTeam = useStore(
     stores.match,
     (s) => s.getMatch(id)?.home_team,
@@ -101,14 +105,22 @@ export default function MatchDetailPage({ params }: MatchDetailPageProps) {
         <p>
           Count: <span data-testid="markets-count">{marketsCount}</span>
         </p>
-        {/* marketsVersionHash is read so React subscribes to version
-            changes; surfaced as a hidden data attribute for tests. */}
-        <p
-          data-testid="markets-version-hash"
-          style={{ display: "none" }}
-        >
-          {marketsVersionHash}
-        </p>
+        <ul data-testid="markets-list" style={{ listStyle: "none", padding: 0 }}>
+          {marketRows.map((m) => (
+            <li
+              key={m.market_id}
+              data-testid={`market-row-${m.market_id}`}
+              data-status={m.status}
+              style={{ padding: "4px 0", borderBottom: "1px solid #eee" }}
+            >
+              <code>{m.market_id}</code>
+              {" · status="}
+              <strong>{m.status}</strong>
+              {" · v"}
+              {m.version}
+            </li>
+          ))}
+        </ul>
       </section>
     </main>
   );
