@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useMemo, type ReactNode } from "react";
 
+import { RestClient } from "@/api/client";
 import { BetSlipStore } from "@/betSlip/store";
 import { BetStopStore } from "@/betStop/store";
 import { CatalogStore } from "@/catalog/store";
@@ -52,6 +53,7 @@ export interface Stores {
   health: HealthStore;
   telemetry: TelemetryStore;
   dispatcher: Dispatcher;
+  restClient: RestClient;
 }
 
 export interface CreateDefaultStoresOptions {
@@ -60,6 +62,13 @@ export interface CreateDefaultStoresOptions {
    * `createHttpTelemetryShipper({ client })`. Defaults to a no-op shipper.
    */
   telemetryShipper?: TelemetryShipper;
+  /**
+   * RestClient used to talk to the Go BFF. Defaults to a client built from
+   * `NEXT_PUBLIC_BFF_HTTP` (or `http://localhost:8080`) using the global
+   * fetch — sufficient for the dev server; production should inject a
+   * client with auth + telemetry already wired.
+   */
+  restClient?: RestClient;
 }
 
 export function createDefaultStores(
@@ -83,7 +92,18 @@ export function createDefaultStores(
       shipper: opts.telemetryShipper ?? noopShipper,
     }),
     dispatcher: new Dispatcher(),
+    restClient: opts.restClient ?? createDefaultRestClient(),
   };
+}
+
+function createDefaultRestClient(): RestClient {
+  const baseUrl =
+    (typeof process !== "undefined" && process.env?.NEXT_PUBLIC_BFF_HTTP) ||
+    "http://localhost:8080";
+  return new RestClient({
+    baseUrl,
+    fetch: (input, init) => fetch(input, init),
+  });
 }
 
 const StoresContext = createContext<Stores | null>(null);
